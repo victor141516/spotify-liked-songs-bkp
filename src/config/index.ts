@@ -8,6 +8,9 @@ export const PORT = Number.parseInt(process.env.PORT || '3000')
 export const DATABASE_URI = process.env.DATABASE_URI!
 export const MODE = (process.argv[2] || process.env.MODE || 'server') as 'server' | 'worker'
 export const RUN_INTERVAL = Number.parseInt(process.env.RUN_INTERVAL || (1000 * 60 * 60).toString())
+export const TIME_BETWEEN_SNAPSHOTS = Number.parseInt(
+  process.env.TIME_BETWEEN_SNAPSHOTS || (1000 * 60 * 60 * 24).toString(),
+)
 
 if (!CLIENT_ID) {
   console.warn('CLIENT_ID not set')

@@ -1,4 +1,4 @@
-import { RUN_INTERVAL } from '../config'
+import { RUN_INTERVAL, TIME_BETWEEN_SNAPSHOTS } from '../config'
 import { Credentials } from '../credentials'
 import * as db from '../database'
 import { doIt } from '../spotify'
@@ -24,7 +24,8 @@ async function* getNewRuns() {
       SELECT
         credentials_id FROM runs
       WHERE
-        date > NOW() - INTERVAL '1 day')`,
+        date > NOW() - INTERVAL '$1 hours')`,
+    [TIME_BETWEEN_SNAPSHOTS],
   )
   for (const row of rows) {
     yield row as Credentials & { id: number }
