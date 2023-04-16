@@ -1,0 +1,31 @@
+version: '3.9'
+
+networks:
+  caddywork:
+    external: true
+
+services:
+  db:
+    image: postgres:15
+    container_name: db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: spotify-liked-songs-bkp
+      POSTGRES_USER: spotify-liked-songs-bkp
+      POSTGRES_DB: spotify-liked-songs-bkp
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - caddywork
+
+  app:
+    image: victor141516/spotify-liked-songs-bkp:latest
+    container_name: spotify-liked-songs-bkp
+    restart: unless-stopped
+    networks:
+      - caddywork
+    env_file: $HOME/secrets/spotify-liked-songs-bkp/env
+    environment:
+      - PORT=3000
+      - LOGIN_REDIRECT_URI=https://spotify-liked-songs-bkp.viti.site/auth/callback
+      - DATABASE_URI=postgres://spotify-liked-songs-bkp:spotify-liked-songs-bkp@db:5432/spotify-liked-songs-bkp

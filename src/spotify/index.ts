@@ -1,6 +1,6 @@
 const PLAYLIST_NAME = 'Liked Songs'
 
-async function getUser(
+export async function getUser(
   accessToken: string,
   refreshToken: string,
   clientId: string,

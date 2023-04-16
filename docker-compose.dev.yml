@@ -1,0 +1,15 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    container_name: db
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: spotify-liked-songs-bkp
+      POSTGRES_USER: spotify-liked-songs-bkp
+      POSTGRES_DB: spotify-liked-songs-bkp
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    ports:
+      - 25432:5432
