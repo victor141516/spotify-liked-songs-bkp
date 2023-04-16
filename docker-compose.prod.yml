@@ -18,10 +18,10 @@ services:
     networks:
       - caddywork
 
-  app:
+  server:
     image: victor141516/spotify-liked-songs-bkp:latest
     build: .
-    container_name: spotify-liked-songs-bkp
+    container_name: spotify-liked-songs-bkp-server
     restart: unless-stopped
     networks:
       - caddywork
@@ -30,3 +30,16 @@ services:
       - PORT=3000
       - LOGIN_REDIRECT_URI=https://spotify-liked-songs-bkp.viti.site/auth/callback
       - DATABASE_URI=postgres://spotify-liked-songs-bkp:spotify-liked-songs-bkp@db:5432/spotify-liked-songs-bkp
+    command: server
+
+  worker:
+    image: victor141516/spotify-liked-songs-bkp:latest
+    build: .
+    container_name: spotify-liked-songs-bkp-worker
+    restart: unless-stopped
+    networks:
+      - caddywork
+    env_file: $HOME/secrets/spotify-liked-songs-bkp/env
+    environment:
+      - DATABASE_URI=postgres://spotify-liked-songs-bkp:spotify-liked-songs-bkp@db:5432/spotify-liked-songs-bkp
+    command: worker
