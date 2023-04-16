@@ -59,5 +59,5 @@ const _do = async () => {
 export const start = () => {
   if (!spotifyApiData.clientId || !spotifyApiData.clientSecret) throw new Error('No Spotify API data set')
   _do()
-  setInterval(_do, RUN_INTERVAL / 1000)
+  setInterval(_do, RUN_INTERVAL * 1000)
 }
