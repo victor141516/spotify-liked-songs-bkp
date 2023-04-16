@@ -7,7 +7,7 @@ networks:
 services:
   db:
     image: postgres:15
-    container_name: db
+    container_name: spotify-liked-songs-bkp-db
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: spotify-liked-songs-bkp

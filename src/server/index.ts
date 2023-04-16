@@ -62,6 +62,7 @@ export const start = (clientId: string, clientSecret: string, port: number, redi
       await saveCredentials(response, userId)
       return res.json({ ok: true, result: 'credentials_saved' })
     } catch (error) {
+      // TODO: make the check more specific
       if (error instanceof pg.DatabaseError) return res.json({ ok: true, result: 'credentials_already_saved' })
 
       return res.json({ ok: false, error })
