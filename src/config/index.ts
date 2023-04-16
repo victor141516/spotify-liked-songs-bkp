@@ -9,6 +9,15 @@ export const DATABASE_URI = process.env.DATABASE_URI!
 export const MODE = (process.argv[2] || process.env.MODE || 'server') as 'server' | 'worker'
 export const RUN_INTERVAL = Number.parseInt(process.env.RUN_INTERVAL || (1000 * 60 * 60).toString())
 
-if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI || !DATABASE_URI) {
-  throw new Error('Missing environment variables')
+if (!CLIENT_ID) {
+  console.warn('CLIENT_ID not set')
+}
+if (!CLIENT_SECRET) {
+  console.warn('CLIENT_SECRET not set')
+}
+if (!REDIRECT_URI) {
+  console.warn('REDIRECT_URI not set')
+}
+if (!DATABASE_URI) {
+  console.warn('DATABASE_URI not set')
 }
