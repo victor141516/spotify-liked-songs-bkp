@@ -103,7 +103,9 @@ async function addTracksToPlaylist(accessToken: string, playlistId: string, like
   for (let i = 0; i < likedSongs.length; i += 100) {
     batches.push(likedSongs.slice(i, i + 100))
   }
-  const batchJobs = batches.map(async (batch) => {
+
+  const batchJobs: boolean[] = []
+  for (const batch of batches) {
     const res = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
       method: 'POST',
       headers: {
@@ -114,10 +116,9 @@ async function addTracksToPlaylist(accessToken: string, playlistId: string, like
         uris: batch.map((id) => `spotify:track:${id}`),
       }),
     })
-    return res.ok
-  })
-  const results = await Promise.all(batchJobs)
-  return results.every(Boolean)
+    batchJobs.push(res.ok)
+  }
+  return batchJobs.every(Boolean)
 }
 
 async function getAllPlaylists(accessToken: string) {
