@@ -24,8 +24,7 @@ async function* getNewRuns() {
       SELECT
         credentials_id FROM runs
       WHERE
-        date > NOW() - INTERVAL '$1 hours')`,
-    [TIME_BETWEEN_SNAPSHOTS],
+        date > NOW() - INTERVAL '${TIME_BETWEEN_SNAPSHOTS} seconds')`,
   )
   for (const row of rows) {
     yield row as Credentials & { id: number }
