@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package.json package-lock.json /app/
 RUN npm i
 COPY . /app
-RUN npm run build:nocheck
+RUN npm run build:nocheck && npm run remove-type-module
 
 FROM node:18-alpine
 WORKDIR /app

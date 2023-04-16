@@ -10,6 +10,7 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "build:nocheck": "babel src --extensions '.ts' -d dist --delete-dir-on-start",
+    "remove-type-module": "cat package.json | jq 'del(.type)' > package.tmp && mv package.tmp package.json",
     "build": "npm run lint:tsc && npm run build:nocheck",
     "build:declaration": "tsc --emitDeclarationOnly",
     "run-compiled": "node",
