@@ -20,6 +20,7 @@ services:
 
   app:
     image: victor141516/spotify-liked-songs-bkp:latest
+    build: .
     container_name: spotify-liked-songs-bkp
     restart: unless-stopped
     networks:
