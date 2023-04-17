@@ -1,4 +1,6 @@
-import express from 'express'
+import express, { Request } from 'express'
+import session from 'express-session'
+import { readFileSync } from 'fs'
 import { nanoid } from 'nanoid'
 import pg from 'pg'
 import { save as saveCredentials } from '../credentials'
@@ -10,6 +12,7 @@ export const start = (
   port: number,
   spotifyApiRedirectUri: string,
   appRedirectUrl: string,
+  sessionSecret: string,
 ) => {
   const app = express()
   app.use(express.json())

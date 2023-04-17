@@ -5,6 +5,7 @@ import {
   DATABASE_URI,
   MODE,
   PORT,
+  SESSION_SECRET,
   SPOTIFY_API_REDIRECT_URI,
 } from './config'
 import * as db from './database'
@@ -19,7 +20,7 @@ const main = async () => {
     worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)
     worker.start()
   } else {
-    await server.start(CLIENT_ID, CLIENT_SECRET, PORT, SPOTIFY_API_REDIRECT_URI, APP_REDIRECT_URI)
+    await server.start(CLIENT_ID, CLIENT_SECRET, PORT, SPOTIFY_API_REDIRECT_URI, APP_REDIRECT_URI, SESSION_SECRET)
   }
 }
 

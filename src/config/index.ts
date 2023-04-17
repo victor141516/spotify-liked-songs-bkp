@@ -14,10 +14,14 @@ export const RUN_INTERVAL = Number.parseInt(process.env.RUN_INTERVAL || (1000 * 
 export const TIME_BETWEEN_SNAPSHOTS = Number.parseInt(
   process.env.TIME_BETWEEN_SNAPSHOTS || (1000 * 60 * 60 * 24).toString(),
 )
+export const SESSION_SECRET = process.env.SESSION_SECRET || 'a-very-secret-secret'
 
 if (!CLIENT_ID) {
   console.warn('CLIENT_ID not set')
 }
 if (!CLIENT_SECRET) {
   console.warn('CLIENT_SECRET not set')
+}
+if (SESSION_SECRET === 'a-very-secret-secret') {
+  console.warn('SESSION_SECRET not set. Using default value. THIS IS NOT SECURE!!!')
 }
