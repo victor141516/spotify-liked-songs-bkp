@@ -4,7 +4,13 @@ import pg from 'pg'
 import { save as saveCredentials } from '../credentials'
 import { doIt, getUser } from '../spotify'
 
-export const start = (clientId: string, clientSecret: string, port: number, redirectUri: string) => {
+export const start = (
+  clientId: string,
+  clientSecret: string,
+  port: number,
+  spotifyApiRedirectUri: string,
+  appRedirectUrl: string,
+) => {
   const app = express()
   app.use(express.json())
 
@@ -18,7 +24,7 @@ export const start = (clientId: string, clientSecret: string, port: number, redi
           response_type: 'code',
           client_id: clientId,
           scope: scope,
-          redirect_uri: redirectUri,
+          redirect_uri: spotifyApiRedirectUri,
           state: state,
         }),
     )
@@ -28,8 +34,10 @@ export const start = (clientId: string, clientSecret: string, port: number, redi
     const code = (req.query.code as undefined | string) || null
     const state = (req.query.state as undefined | string) || null
 
-    if (state === null) return res.json({ ok: false, error: 'no_state' })
-    if (code === null) return res.json({ ok: false, error: 'no_code' })
+    if (state === null)
+      return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: 'no_state' }))
+    if (code === null)
+      return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: 'no_code' }))
 
     let response: {
       access_token: string
@@ -43,29 +51,36 @@ export const start = (clientId: string, clientSecret: string, port: number, redi
         method: 'POST',
         body: new URLSearchParams({
           code: code,
-          redirect_uri: redirectUri,
+          redirect_uri: spotifyApiRedirectUri,
           grant_type: 'authorization_code',
         }),
         headers: {
           Authorization: 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64'),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-      }).then((res) => res.json())
+      }).then((r) => r.json())
     } catch (error) {
       console.error(error)
-      return res.json({ ok: false, error })
+      return res.redirect(
+        appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: error?.toString() || 'unknown_error' }),
+      )
     }
 
     const { userId } = await getUser(response.access_token, response.refresh_token, clientId, clientSecret)
 
     try {
       await saveCredentials(response, userId)
-      return res.json({ ok: true, result: 'credentials_saved' })
+      return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_saved' }))
     } catch (error) {
       // TODO: make the check more specific
-      if (error instanceof pg.DatabaseError) return res.json({ ok: true, result: 'credentials_already_saved' })
+      if (error instanceof pg.DatabaseError)
+        return res.redirect(
+          appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_already_saved' }),
+        )
 
-      return res.json({ ok: false, error })
+      return res.redirect(
+        appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: error?.toString() || 'unknown_error' }),
+      )
     }
   })
 

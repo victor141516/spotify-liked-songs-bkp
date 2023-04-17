@@ -1,4 +1,12 @@
-import { CLIENT_ID, CLIENT_SECRET, DATABASE_URI, MODE, PORT, REDIRECT_URI } from './config'
+import {
+  APP_REDIRECT_URI,
+  CLIENT_ID,
+  CLIENT_SECRET,
+  DATABASE_URI,
+  MODE,
+  PORT,
+  SPOTIFY_API_REDIRECT_URI,
+} from './config'
 import * as db from './database'
 import * as server from './server'
 import * as worker from './worker'
@@ -11,7 +19,7 @@ const main = async () => {
     worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)
     worker.start()
   } else {
-    await server.start(CLIENT_ID, CLIENT_SECRET, PORT, REDIRECT_URI)
+    await server.start(CLIENT_ID, CLIENT_SECRET, PORT, SPOTIFY_API_REDIRECT_URI, APP_REDIRECT_URI)
   }
 }
 
