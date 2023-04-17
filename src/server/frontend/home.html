@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Make Spotify Liked playlist shareable</title>
+  <link rel="stylesheet" href="/static/index.css">
+</head>
+
+<body>
+  <main>
+    <h1>Make Spotify Liked playlist shareable</h1>
+    <div id="explanation-wrapper">
+      <p>Spotify has this annoying issue that doesn't allow you to share your "Liked Songs" list</p>
+      <p>I made this tool to help you with that</p>
+      <p>It'll create a new playlist on your account and will keep that playlist in sync with your Liked Songs list</p>
+      <p>The list is updated regularly, but it's not instant, so you'll have to wait some time since you change your
+        liked
+        songs list. I'll try to keep that "regularly" as low as possible</p>
+      <p>The tool will also add a snapshot of the liked songs list each day, for the last 5 days. I'll add a toggle for
+        this
+        in the future</p>
+    </div>
+    <a id="auth-button" href="/auth/login">Authorize with Spotify</a>
+  </main>
+  <div id="stop-tool">
+    <h2>I don't want to use this tool anymore</h2>
+    <p>That's sad 😢. Just go to your <a href="https://www.spotify.com/us/account/apps/">Spotify connected apps page</a>
+      and remove access to this tool (the name is <code>Liked Songs bkp</code>)</p>
+    <p>If you want to give some feedback please <a
+        href="https://github.com/victor141516/spotify-liked-songs-bkp/issues/new/choose">open
+        an issue</a></p>
+  </div>
+</body>
+
+</html>

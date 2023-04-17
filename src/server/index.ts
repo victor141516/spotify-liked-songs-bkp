@@ -6,6 +6,17 @@ import pg from 'pg'
 import { save as saveCredentials } from '../credentials'
 import { doIt, getUser } from '../spotify'
 
+const frontendFileNames = ['home.html', 'callback.html'] as const
+const frontendFiles = frontendFileNames
+  .map((filename) => ({
+    filename,
+    content: readFileSync(`src/server/frontend/${filename}`, 'utf8'),
+  }))
+  .reduce(
+    (acc, { filename, content }) => ({ ...acc, [filename]: content }),
+    {} as Record<(typeof frontendFileNames)[number], string>,
+  )
+
 export const start = (
   clientId: string,
   clientSecret: string,
@@ -16,6 +27,20 @@ export const start = (
 ) => {
   const app = express()
   app.use(express.json())
+  app.use('/static', express.static('src/server/frontend/static'))
+
+  // TODO: add session store
+  app.use(session({ secret: sessionSecret, resave: false, saveUninitialized: false }))
+
+  const getSession = <T>(req: Request) => req.session as T
+
+  app.get('/', async (req, res) => {
+    res.send(frontendFiles['home.html'])
+  })
+
+  app.get('/callback', async (req, res) => {
+    res.send(frontendFiles['callback.html'])
+  })
 
   app.get('/auth/login', async (req, res) => {
     const state = nanoid(16)
