@@ -29,7 +29,8 @@ services:
     environment:
       - MODE=server
       - PORT=3000
-      - LOGIN_REDIRECT_URI=https://spotify-liked-songs-bkp.viti.site/auth/callback
+      - SPOTIFY_API_REDIRECT_URI=https://spotify-liked-songs-bkp.viti.site/auth/callback
+      - APP_REDIRECT_URI=https://spotify-liked-songs-bkp.viti.site/callback
       - DATABASE_URI=postgres://spotify-liked-songs-bkp:spotify-liked-songs-bkp@db:5432/spotify-liked-songs-bkp
 
   worker:
