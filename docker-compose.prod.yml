@@ -29,8 +29,8 @@ services:
     environment:
       - MODE=server
       - PORT=3000
-      - SPOTIFY_API_REDIRECT_URI=https://liked-sync.viti.site/auth/callback
-      - APP_REDIRECT_URI=https://liked-sync.viti.site/callback
+      - SPOTIFY_API_REDIRECT_URI=https://liked-share.viti.site/auth/callback
+      - APP_REDIRECT_URI=https://liked-share.viti.site/callback
       - DATABASE_URI=postgres://spotify-liked-songs-bkp:spotify-liked-songs-bkp@db:5432/spotify-liked-songs-bkp
 
   worker:
