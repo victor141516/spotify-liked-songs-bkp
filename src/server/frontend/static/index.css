@@ -1,7 +1,6 @@
 body {
   font-family: 'Open Sans', sans-serif;
   background-color: #121212;
-  margin-top: 10vh;
 }
 
 main {
@@ -60,6 +59,7 @@ h2 {
 p {
   margin: 0;
   color: #fff;
+  line-height: 1.5;
 }
 
 #explanation-wrapper > p {
@@ -78,9 +78,9 @@ p {
   border: none;
 }
 
-@media only screen and (max-width: 600px) {
+@media only screen and (min-width: 600px) {
   body {
-    margin-top: 0;
+    margin-top: 10vh;
   }
 }
 
@@ -104,7 +104,7 @@ a {
 code {
   background-color: #1e1e1e;
   color: #fff;
-  padding: 10px 20px;
+  padding: 5px 10px;
   border-radius: 10px;
   font-size: 16px;
   font-weight: 600;
