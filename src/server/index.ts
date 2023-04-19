@@ -2,7 +2,6 @@ import express, { Request } from 'express'
 import session from 'express-session'
 import { readFileSync } from 'fs'
 import { nanoid } from 'nanoid'
-import pg from 'pg'
 import { save as saveCredentials } from '../credentials'
 import { doIt, getUser } from '../spotify'
 
@@ -94,20 +93,24 @@ export const start = (
       )
     }
 
-    const { userId } = await getUser(response.access_token, response.refresh_token, clientId, clientSecret)
+    let userId: string
+
+    try {
+      const userResponse = await getUser(response.access_token, response.refresh_token, clientId, clientSecret)
+      userId = userResponse.userId
+    } catch (error) {
+      return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: 'refresh_error' }))
+    }
 
     try {
       await saveCredentials(response, userId)
       return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_saved' }))
     } catch (error) {
-      // TODO: make the check more specific
-      if (error instanceof pg.DatabaseError)
-        return res.redirect(
-          appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_already_saved' }),
-        )
-
+      console.warn(error?.toString())
       return res.redirect(
-        appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: error?.toString() || 'unknown_error' }),
+        appRedirectUrl +
+          '?' +
+          new URLSearchParams({ ok: 'false', error: 'could_not_save_credentials' || 'unknown_error' }),
       )
     }
   })

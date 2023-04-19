@@ -1,7 +1,7 @@
 import { RUN_INTERVAL, TIME_BETWEEN_SNAPSHOTS } from '../config'
 import { Credentials } from '../credentials'
 import * as db from '../database'
-import { doIt } from '../spotify'
+import { CouldNotAuthenticateSpotifyError, doIt } from '../spotify'
 
 const spotifyApiData = {
   clientId: null as null | string,
@@ -50,7 +50,13 @@ const _do = async () => {
       )
       saveRun(credentials.id)
     } catch (error) {
-      console.error('!!! Error while running', error)
+      if (error instanceof CouldNotAuthenticateSpotifyError) {
+        console.error('!!! Could not authenticate Spotify', error)
+        console.log('- Deleting credentials. User ID:', credentials.id)
+        await db.query('DELETE FROM credentials WHERE id = $1', [credentials.id])
+      } else {
+        console.error('!!! Unknown error while running', error)
+      }
     }
   }
   console.debug('!!! No more runs', new Date())

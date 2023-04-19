@@ -2,11 +2,11 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Make Spotify Liked playlist shareable</title>
-  <link rel="stylesheet" href="/static/index.css">
+  <link rel="stylesheet" href="/static/index.css" />
 </head>
 
 <body>
@@ -17,33 +17,37 @@
     </div>
     <div id="error" class="hidden">
       <h1>Something went wrong 🙁</h1>
-      <p>Please <a href="https://github.com/victor141516/spotify-liked-songs-bkp/issues/new/choose">open
-          an issue</a> and attach
-        the error bellow</p>
+      <p>
+        Please
+        <a href="https://github.com/victor141516/spotify-liked-songs-bkp/issues/new/choose">open an issue</a> and
+        attach the error bellow
+      </p>
       <code id="error-message"></code>
     </div>
   </main>
 </body>
 <script type="text/javascript">
   ; (() => {
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(location.search)
 
     if (params.get('ok') !== 'true') {
-      const errorText = params.get('error');
-      const errorMessageElement = document.getElementById('error-message');
-      const errorElement = document.getElementById('error');
-      errorMessageElement.innerText = errorText;
-      errorElement.classList.remove('hidden');
+      const errorCode = params.get('error')
+      const errorMessageElement = document.getElementById('error-message')
+      const errorElement = document.getElementById('error')
+      errorMessageElement.innerText = {
+        could_not_save_credentials: 'Could not save your credentials',
+        refresh_error: 'Error getting your user information'
+      }[errorCode] ?? errorCode
+      errorElement.classList.remove('hidden')
     } else {
-      const resultMessageElement = document.getElementById('result-message');
-      const resultElement = document.getElementById('result');
-      const result = params.get('result');
-      if (result === 'credentials_already_saved') {
-        resultMessageElement.innerText = 'You already are using this tool 🙌. You can close this window now.';
-      } else if (result === 'credentials_saved') {
-        resultMessageElement.innerText = 'Now your liked songs playlist will be kept in sync with your new playlist 🎉. It might take a few minutes for the first sync to happen. You can close this window now.';
-      }
-      resultElement.classList.remove('hidden');
+      const resultMessageElement = document.getElementById('result-message')
+      const resultElement = document.getElementById('result')
+      const result = params.get('result')
+      resultMessageElement.innerText = {
+        credentials_saved:
+          'Now your liked songs playlist will be kept in sync with your new playlist 🎉. It might take a few minutes for the first sync to happen. You can close this window now.',
+      }[result]
+      resultElement.classList.remove('hidden')
     }
   })()
 </script>

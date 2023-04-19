@@ -1,4 +1,11 @@
+import * as db from '../database'
+
 const PLAYLIST_NAME = 'Liked Songs'
+
+export class SpotifyError {
+  constructor(public message: string) {}
+}
+export class CouldNotAuthenticateSpotifyError extends SpotifyError {}
 
 export async function getUser(
   accessToken: string,
@@ -34,10 +41,12 @@ export async function getUser(
       const { access_token: newAccessToken } = await refreshResponse.json()
       console.debug('  - Checking if access token works...')
       return getUser(newAccessToken, refreshToken, clientId, clientSecret)
+    } else {
+      console.error('Error refreshing:', refreshResponse.status, await refreshResponse.text())
     }
   }
   console.debug('  - Access token does not work and could not be refreshed')
-  throw new Error(`Failed to get user ID (status: ${response.status})`)
+  throw new CouldNotAuthenticateSpotifyError(`Failed to get user ID (status: ${response.status})`)
 }
 
 async function getLikedSongs(accessToken: string): Promise<string[]> {
@@ -230,9 +239,15 @@ async function removeOldSnapshots(accessToken: string, itemsToKeep: number) {
 
 export async function doIt(accessToken: string, refreshToken: string, clientId: string, clientSecret: string) {
   console.debug('- Refreshing access token...')
-  const { accessToken: freshAccessToken } = await getUser(accessToken, refreshToken, clientId, clientSecret)
-  console.debug('- Fresh token obtained!')
-  accessToken = freshAccessToken
+  try {
+    const { accessToken: freshAccessToken } = await getUser(accessToken, refreshToken, clientId, clientSecret)
+    console.debug('- Fresh token obtained!')
+    accessToken = freshAccessToken
+  } catch (error) {
+    throw error
+  }
+  console.debug('- Updating access token on the database...')
+  await db.query('UPDATE credentials SET access_token = $1', [accessToken])
   console.debug('- Getting liked songs...')
   const likedSongs = await getLikedSongs(accessToken)
   console.debug('- Liked songs retrieved!')
