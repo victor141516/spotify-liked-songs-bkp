@@ -99,6 +99,7 @@ export const start = (
       const userResponse = await getUser(response.access_token, response.refresh_token, clientId, clientSecret)
       userId = userResponse.userId
     } catch (error) {
+      console.warn(error)
       return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: 'refresh_error' }))
     }
 
