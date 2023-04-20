@@ -241,15 +241,22 @@ async function removeOldSnapshots(accessToken: string, itemsToKeep: number) {
 
 export async function doIt(accessToken: string, refreshToken: string, clientId: string, clientSecret: string) {
   console.debug('- Refreshing access token...')
+  let userId: string
   try {
-    const { accessToken: freshAccessToken } = await getUser(accessToken, refreshToken, clientId, clientSecret)
+    const { accessToken: freshAccessToken, userId: theUserId } = await getUser(
+      accessToken,
+      refreshToken,
+      clientId,
+      clientSecret,
+    )
+    userId = theUserId
     console.debug('- Fresh token obtained!')
     accessToken = freshAccessToken
   } catch (error) {
     throw error
   }
   console.debug('- Updating access token on the database...')
-  await db.query('UPDATE credentials SET access_token = $1', [accessToken])
+  await db.query('UPDATE credentials SET access_token = $1 WHERE user_id = $2', [accessToken, userId])
   console.debug('- Getting liked songs...')
   const likedSongs = await getLikedSongs(accessToken)
   console.debug('- Liked songs retrieved!')
