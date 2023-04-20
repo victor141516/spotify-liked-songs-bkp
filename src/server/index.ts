@@ -3,6 +3,7 @@ import session from 'express-session'
 import { readFileSync } from 'fs'
 import { nanoid } from 'nanoid'
 import { save as saveCredentials } from '../credentials'
+import * as db from '../database'
 import { doIt, getUser } from '../spotify'
 
 const frontendFileNames = ['home.html', 'callback.html'] as const
@@ -20,7 +21,8 @@ export const start = (
   clientId: string,
   clientSecret: string,
   port: number,
-  spotifyApiRedirectUri: string,
+  spotifyApiAuthRedirectUri: string,
+  spotifyApiRevokeRedirectUri: string,
   appRedirectUrl: string,
   sessionSecret: string,
 ) => {
@@ -51,7 +53,23 @@ export const start = (
           response_type: 'code',
           client_id: clientId,
           scope: scope,
-          redirect_uri: spotifyApiRedirectUri,
+          redirect_uri: spotifyApiAuthRedirectUri,
+          state: state,
+        }),
+    )
+  })
+
+  app.get('/auth/revoke', async (req, res) => {
+    const state = nanoid(16)
+    const scope = ''
+
+    res.redirect(
+      'https://accounts.spotify.com/authorize?' +
+        new URLSearchParams({
+          response_type: 'code',
+          client_id: clientId,
+          scope: scope,
+          redirect_uri: spotifyApiRevokeRedirectUri,
           state: state,
         }),
     )
@@ -60,6 +78,7 @@ export const start = (
   app.get('/auth/callback', async (req, res) => {
     const code = (req.query.code as undefined | string) || null
     const state = (req.query.state as undefined | string) || null
+    const revoke = ((req.query.revoke as undefined | string) || 'false') === 'true'
 
     if (state === null)
       return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: 'no_state' }))
@@ -78,7 +97,7 @@ export const start = (
         method: 'POST',
         body: new URLSearchParams({
           code: code,
-          redirect_uri: spotifyApiRedirectUri,
+          redirect_uri: revoke ? spotifyApiRevokeRedirectUri : spotifyApiAuthRedirectUri,
           grant_type: 'authorization_code',
         }),
         headers: {
@@ -103,16 +122,21 @@ export const start = (
       return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: 'refresh_error' }))
     }
 
-    try {
-      await saveCredentials(response, userId)
-      return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_saved' }))
-    } catch (error) {
-      console.warn(error?.toString())
-      return res.redirect(
-        appRedirectUrl +
-          '?' +
-          new URLSearchParams({ ok: 'false', error: 'could_not_save_credentials' || 'unknown_error' }),
-      )
+    if (revoke) {
+      await db.query('DELETE FROM credentials WHERE user_id = $1', [userId])
+      return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_revoked' }))
+    } else {
+      try {
+        await saveCredentials(response, userId)
+        return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_saved' }))
+      } catch (error) {
+        console.warn(error?.toString())
+        return res.redirect(
+          appRedirectUrl +
+            '?' +
+            new URLSearchParams({ ok: 'false', error: 'could_not_save_credentials' || 'unknown_error' }),
+        )
+      }
     }
   })
 

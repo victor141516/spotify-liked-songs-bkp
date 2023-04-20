@@ -3,7 +3,10 @@ import { config as configEnv } from 'dotenv'
 configEnv()
 export const CLIENT_ID = process.env.CLIENT_ID!
 export const CLIENT_SECRET = process.env.CLIENT_SECRET!
-export const SPOTIFY_API_REDIRECT_URI = process.env.SPOTIFY_API_REDIRECT_URI || 'http://localhost:3000/auth/callback'
+export const SPOTIFY_API_AUTH_REDIRECT_URI =
+  process.env.SPOTIFY_API_AUTH_REDIRECT_URI || 'http://localhost:3000/auth/callback'
+export const SPOTIFY_API_REVOKE_REDIRECT_URI =
+  process.env.SPOTIFY_API_REVOKE_REDIRECT_URI || 'http://localhost:3000/auth/callback?revoke=true'
 export const APP_REDIRECT_URI = process.env.APP_REDIRECT_URI || 'http://localhost:3000/callback'
 export const PORT = Number.parseInt(process.env.PORT || '3000')
 export const DATABASE_URI =

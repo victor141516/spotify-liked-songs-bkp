@@ -11,7 +11,9 @@
 
 <body>
   <main>
-    <img src="/static/spotify.svg" alt="Spotify logo" id="spotify-logo">
+    <a href="/">
+      <img src="/static/spotify.svg" alt="Spotify logo" id="spotify-logo">
+    </a>
     <h1>Make Spotify Liked playlist shareable</h1>
     <div id="explanation-wrapper">
       <p>Spotify has this annoying issue that doesn't allow you to share your "Liked Songs" list</p>
@@ -28,8 +30,9 @@
   </main>
   <div id="stop-tool">
     <h2>I don't want to use this tool anymore</h2>
-    <p>That's sad 😢. Just go to your <a href="https://www.spotify.com/us/account/apps/">Spotify connected apps page</a>
-      and remove access to this tool (the name is <code>Liked Songs bkp</code>)</p>
+    <p>That's sad 😢. Just click here to
+      <a id="auth-button" href="/auth/revoke">disconnect the app</a>
+    </p>
     <p>If you want to give some feedback please <a
         href="https://github.com/victor141516/spotify-liked-songs-bkp/issues/new/choose">open
         an issue</a></p>

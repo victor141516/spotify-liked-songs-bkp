@@ -11,10 +11,14 @@
 
 <body>
   <main>
-    <img src="/static/spotify.svg" alt="Spotify logo" id="spotify-logo">
+    <a href="/">
+      <img src="/static/spotify.svg" alt="Spotify logo" id="spotify-logo">
+    </a>
     <div id="result" class="hidden">
       <h1 id="header">Done!</h1>
       <p id="result-message"></p>
+      <video id="goodbye" class="hidden" muted loop autoplay="true" preload="auto" playsinline="true"
+        src="/static/goodbye.mp4" />
     </div>
     <div id="error" class="hidden">
       <h1>Something went wrong 🙁</h1>
@@ -45,10 +49,14 @@
       const resultElement = document.getElementById('result')
       const result = params.get('result')
       resultMessageElement.innerText = {
+        credentials_revoked: 'You thought you could leve without saying goodbye?',
         credentials_saved:
           'Now your liked songs playlist will be kept in sync with your new playlist 🎉. It might take a few minutes for the first sync to happen. You can close this window now.',
-      }[result]
+      }[result] ?? result
       resultElement.classList.remove('hidden')
+      if (result === 'credentials_revoked') {
+        document.getElementById('goodbye').classList.remove('hidden')
+      }
     }
   })()
 </script>
