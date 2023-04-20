@@ -109,3 +109,7 @@ code {
   font-size: 16px;
   font-weight: 600;
 }
+
+#spotify-logo {
+  max-width: 100%;
+}

@@ -44,6 +44,8 @@ export async function getUser(
     } else {
       console.error('Error refreshing:', refreshResponse.status, await refreshResponse.text())
     }
+  } else {
+    console.error('  - Unknown error getting user info:', response.status, await response.text())
   }
   console.debug('  - Access token does not work and could not be refreshed')
   throw new CouldNotAuthenticateSpotifyError(`Failed to get user ID (status: ${response.status})`)
