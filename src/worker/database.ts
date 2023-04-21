@@ -1,5 +1,5 @@
-import { Credentials } from '../credentials'
-import * as db from '../database'
+import { Credentials } from '../libraries/credentials'
+import * as db from '../libraries/database'
 
 export const saveRun = async (credentialsId: number) => {
   await db.query('INSERT INTO runs (credentials_id) VALUES ($1)', [credentialsId])

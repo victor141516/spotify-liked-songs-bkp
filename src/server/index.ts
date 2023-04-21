@@ -2,8 +2,8 @@ import express, { Request } from 'express'
 import session from 'express-session'
 import { readFileSync } from 'fs'
 import { nanoid } from 'nanoid'
-import { deleteCredentials, save as saveCredentials } from '../credentials'
-import { CouldNotUseCodeToGetAccessTokenSpotifyError, authCodeToAccessToken, getUser, sync } from '../spotify'
+import { deleteCredentials, save as saveCredentials } from '../libraries/credentials'
+import { CouldNotUseCodeToGetAccessTokenSpotifyError, authCodeToAccessToken, getUser } from '../libraries/spotify'
 
 const SPOTIFY_API_SCOPES = 'user-library-read playlist-modify-public'
 

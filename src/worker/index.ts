@@ -1,7 +1,14 @@
 import console from 'console'
-import { RUN_INTERVAL, TIME_BETWEEN_SNAPSHOTS } from '../config'
-import { deleteCredentials } from '../credentials'
-import { CouldNotAuthenticateSpotifyError, sync } from '../spotify'
+import { deleteCredentials, save } from '../libraries/credentials'
+import {
+  CouldNotAuthenticateSpotifyError,
+  addTracksToPlaylist,
+  createSnapshotPlaylist,
+  getLikedSongs,
+  getUser,
+  removeOldSnapshots,
+  syncDefaultPlaylist,
+} from '../libraries/spotify'
 import { getNewRuns, saveRun } from './database'
 
 const spotifyApiData = {
@@ -14,9 +21,48 @@ export const setupSpotifyApi = (clientId: string, clientSecret: string) => {
   spotifyApiData.clientSecret = clientSecret
 }
 
-const _do = async () => {
-  for await (const credentials of getNewRuns(TIME_BETWEEN_SNAPSHOTS)) {
+async function sync(accessToken: string, refreshToken: string, clientId: string, clientSecret: string) {
+  console.debug('- Refreshing access token...')
+  let userId: string
+  try {
+    const { accessToken: freshAccessToken, userId: theUserId } = await getUser(
+      accessToken,
+      refreshToken,
+      clientId,
+      clientSecret,
+    )
+    userId = theUserId
+    console.debug('- Fresh token obtained!')
+    accessToken = freshAccessToken
+  } catch (error) {
+    throw error
+  }
+  console.debug('- Updating access token on the database...')
+  await save({ access_token: accessToken, refresh_token: refreshToken }, userId)
+  console.debug('- Getting liked songs...')
+  const likedSongs = await getLikedSongs(accessToken)
+  console.debug('- Liked songs retrieved!')
+  console.debug('- Syncing default playlist...')
+  await syncDefaultPlaylist(accessToken, likedSongs)
+  console.debug('- Default playlist synced!')
+  console.debug('- Creating snapshot playlist...')
+  const playlistId = await createSnapshotPlaylist(accessToken)
+  if (playlistId) {
+    console.debug('- Snapshot playlist created!')
+    await addTracksToPlaylist(accessToken, playlistId, likedSongs)
+    console.debug('- Tracks added to snapshot playlist!')
+  } else {
+    console.debug('- Snapshot playlist already exists!')
+  }
+  console.debug('- Removing old snapshots...')
+  await removeOldSnapshots(accessToken, 5)
+  console.debug('- Old snapshots removed!')
+}
+
+const _do = async (timeBetweenSnapshots: number) => {
+  for await (const credentials of getNewRuns(timeBetweenSnapshots)) {
     console.debug('!!! New run', {
+      ...credentials,
       access_token: credentials.access_token.slice(0, 10).concat('...'),
       refresh_token: credentials.refresh_token.slice(0, 10).concat('...'),
     })
@@ -41,8 +87,8 @@ const _do = async () => {
   console.debug('!!! No more runs', new Date())
 }
 
-export const start = () => {
+export const start = (runInterval: number, timeBetweenSnapshots: number) => {
   if (!spotifyApiData.clientId || !spotifyApiData.clientSecret) throw new Error('No Spotify API data set')
-  _do()
-  setInterval(_do, RUN_INTERVAL * 1000)
+  _do(timeBetweenSnapshots)
+  setInterval(_do, runInterval * 1000)
 }

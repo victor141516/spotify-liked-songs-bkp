@@ -1,5 +1,3 @@
-import { save } from '../credentials'
-
 const PLAYLIST_NAME = 'Liked Songs'
 
 export class SpotifyError {
@@ -52,7 +50,7 @@ export async function getUser(
   throw new CouldNotAuthenticateSpotifyError(`Failed to get user ID (status: ${response.status})`)
 }
 
-async function getLikedSongs(accessToken: string): Promise<string[]> {
+export async function getLikedSongs(accessToken: string): Promise<string[]> {
   let nextUrl = 'https://api.spotify.com/v1/me/tracks'
   const allSongs: string[] = []
   let count = 0
@@ -71,7 +69,7 @@ async function getLikedSongs(accessToken: string): Promise<string[]> {
   return allSongs
 }
 
-function generatePlaylistName(daysFromNow: number) {
+export function generatePlaylistName(daysFromNow: number) {
   const now = new Date()
   const date = new Date(now.getTime() - daysFromNow * 24 * 60 * 60 * 1000)
   return `${PLAYLIST_NAME} (${date.toLocaleString('default', {
@@ -79,7 +77,7 @@ function generatePlaylistName(daysFromNow: number) {
   })} ${date.getDate()}, ${date.getFullYear()})`
 }
 
-async function createPlaylist(accessToken: string, name: string) {
+export async function createPlaylist(accessToken: string, name: string) {
   const { id } = await fetch(`https://api.spotify.com/v1/me/playlists`, {
     method: 'POST',
     headers: {
@@ -91,7 +89,7 @@ async function createPlaylist(accessToken: string, name: string) {
   return id
 }
 
-async function createSnapshotPlaylist(accessToken: string) {
+export async function createSnapshotPlaylist(accessToken: string) {
   console.debug('  - Creating snapshot playlist name...')
   const playlistName = generatePlaylistName(0)
   console.debug('  - Created snapshot playlist name!')
@@ -110,7 +108,7 @@ async function createSnapshotPlaylist(accessToken: string) {
   return id
 }
 
-async function addTracksToPlaylist(accessToken: string, playlistId: string, likedSongs: string[]) {
+export async function addTracksToPlaylist(accessToken: string, playlistId: string, likedSongs: string[]) {
   const batches: string[][] = []
   for (let i = 0; i < likedSongs.length; i += 100) {
     batches.push(likedSongs.slice(i, i + 100))
@@ -133,7 +131,7 @@ async function addTracksToPlaylist(accessToken: string, playlistId: string, like
   return batchJobs.every(Boolean)
 }
 
-async function getAllPlaylists(accessToken: string) {
+export async function getAllPlaylists(accessToken: string) {
   const { items } = await fetch('https://api.spotify.com/v1/me/playlists', {
     headers: {
       Authorization: 'Bearer ' + accessToken,
@@ -142,7 +140,7 @@ async function getAllPlaylists(accessToken: string) {
   return items
 }
 
-async function syncDefaultPlaylist(accessToken: string, likedSongs: string[]) {
+export async function syncDefaultPlaylist(accessToken: string, likedSongs: string[]) {
   console.debug('  - Getting all playlists...')
   const playlists = await getAllPlaylists(accessToken)
   console.debug('  - Got all playlists!')
@@ -199,7 +197,7 @@ async function syncDefaultPlaylist(accessToken: string, likedSongs: string[]) {
   return addResult
 }
 
-async function removeOldSnapshots(accessToken: string, itemsToKeep: number) {
+export async function removeOldSnapshots(accessToken: string, itemsToKeep: number) {
   const work = async () => {
     console.debug('  - Getting all playlists...')
     const items = await getAllPlaylists(accessToken)
@@ -239,45 +237,6 @@ async function removeOldSnapshots(accessToken: string, itemsToKeep: number) {
     await work()
   }
 }
-
-export async function sync(accessToken: string, refreshToken: string, clientId: string, clientSecret: string) {
-  console.debug('- Refreshing access token...')
-  let userId: string
-  try {
-    const { accessToken: freshAccessToken, userId: theUserId } = await getUser(
-      accessToken,
-      refreshToken,
-      clientId,
-      clientSecret,
-    )
-    userId = theUserId
-    console.debug('- Fresh token obtained!')
-    accessToken = freshAccessToken
-  } catch (error) {
-    throw error
-  }
-  console.debug('- Updating access token on the database...')
-  await save({ access_token: accessToken, refresh_token: refreshToken }, userId)
-  console.debug('- Getting liked songs...')
-  const likedSongs = await getLikedSongs(accessToken)
-  console.debug('- Liked songs retrieved!')
-  console.debug('- Syncing default playlist...')
-  await syncDefaultPlaylist(accessToken, likedSongs)
-  console.debug('- Default playlist synced!')
-  console.debug('- Creating snapshot playlist...')
-  const playlistId = await createSnapshotPlaylist(accessToken)
-  if (playlistId) {
-    console.debug('- Snapshot playlist created!')
-    await addTracksToPlaylist(accessToken, playlistId, likedSongs)
-    console.debug('- Tracks added to snapshot playlist!')
-  } else {
-    console.debug('- Snapshot playlist already exists!')
-  }
-  console.debug('- Removing old snapshots...')
-  await removeOldSnapshots(accessToken, 5)
-  console.debug('- Old snapshots removed!')
-}
-
 export async function authCodeToAccessToken(code: string, redirectUri: string, clientId: string, clientSecret: string) {
   try {
     return await fetch('https://accounts.spotify.com/api/token', {
