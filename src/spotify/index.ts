@@ -1,4 +1,4 @@
-import * as db from '../database'
+import { save } from '../credentials'
 
 const PLAYLIST_NAME = 'Liked Songs'
 
@@ -6,6 +6,7 @@ export class SpotifyError {
   constructor(public message: string) {}
 }
 export class CouldNotAuthenticateSpotifyError extends SpotifyError {}
+export class CouldNotUseCodeToGetAccessTokenSpotifyError extends SpotifyError {}
 
 export async function getUser(
   accessToken: string,
@@ -239,7 +240,7 @@ async function removeOldSnapshots(accessToken: string, itemsToKeep: number) {
   }
 }
 
-export async function doIt(accessToken: string, refreshToken: string, clientId: string, clientSecret: string) {
+export async function sync(accessToken: string, refreshToken: string, clientId: string, clientSecret: string) {
   console.debug('- Refreshing access token...')
   let userId: string
   try {
@@ -256,7 +257,7 @@ export async function doIt(accessToken: string, refreshToken: string, clientId: 
     throw error
   }
   console.debug('- Updating access token on the database...')
-  await db.query('UPDATE credentials SET access_token = $1 WHERE user_id = $2', [accessToken, userId])
+  await save({ access_token: accessToken, refresh_token: refreshToken }, userId)
   console.debug('- Getting liked songs...')
   const likedSongs = await getLikedSongs(accessToken)
   console.debug('- Liked songs retrieved!')
@@ -275,4 +276,32 @@ export async function doIt(accessToken: string, refreshToken: string, clientId: 
   console.debug('- Removing old snapshots...')
   await removeOldSnapshots(accessToken, 5)
   console.debug('- Old snapshots removed!')
+}
+
+export async function authCodeToAccessToken(code: string, redirectUri: string, clientId: string, clientSecret: string) {
+  try {
+    return await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      body: new URLSearchParams({
+        code: code,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    }).then(
+      (r) =>
+        r.json() as Promise<{
+          access_token: string
+          refresh_token: string
+          expires_in: number
+          token_type: string
+          scope: string
+        }>,
+    )
+  } catch (error) {
+    throw new CouldNotUseCodeToGetAccessTokenSpotifyError(error?.toString() || 'Error using code to get access token')
+  }
 }

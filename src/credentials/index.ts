@@ -19,3 +19,11 @@ export const save = async (credentials: Credentials, userId: string) => {
     [accessToken, refreshToken, userId],
   )
 }
+
+export const deleteCredentials = async ({
+  id,
+  userId,
+}: { userId: string; id?: undefined } | { userId?: undefined; id: number }) => {
+  if (id) return await db.query('DELETE FROM credentials WHERE id = $1', [id])
+  if (userId) return await db.query('DELETE FROM credentials WHERE user_id = $1', [userId])
+}

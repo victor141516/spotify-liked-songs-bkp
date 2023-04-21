@@ -2,9 +2,10 @@ import express, { Request } from 'express'
 import session from 'express-session'
 import { readFileSync } from 'fs'
 import { nanoid } from 'nanoid'
-import { save as saveCredentials } from '../credentials'
-import * as db from '../database'
-import { doIt, getUser } from '../spotify'
+import { deleteCredentials, save as saveCredentials } from '../credentials'
+import { CouldNotUseCodeToGetAccessTokenSpotifyError, authCodeToAccessToken, getUser, sync } from '../spotify'
+
+const SPOTIFY_API_SCOPES = 'user-library-read playlist-modify-public'
 
 const frontendFileNames = ['home.html', 'callback.html'] as const
 const frontendFiles = frontendFileNames
@@ -44,33 +45,27 @@ export const start = (
   })
 
   app.get('/auth/login', async (req, res) => {
-    const state = nanoid(16)
-    const scope = 'user-library-read playlist-modify-public'
-
-    res.redirect(
+    return res.redirect(
       'https://accounts.spotify.com/authorize?' +
         new URLSearchParams({
           response_type: 'code',
           client_id: clientId,
-          scope: scope,
+          scope: SPOTIFY_API_SCOPES,
           redirect_uri: spotifyApiAuthRedirectUri,
-          state: state,
+          state: nanoid(16),
         }),
     )
   })
 
   app.get('/auth/revoke', async (req, res) => {
-    const state = nanoid(16)
-    const scope = ''
-
-    res.redirect(
+    return res.redirect(
       'https://accounts.spotify.com/authorize?' +
         new URLSearchParams({
           response_type: 'code',
           client_id: clientId,
-          scope: scope,
+          scope: '',
           redirect_uri: spotifyApiRevokeRedirectUri,
-          state: state,
+          state: nanoid(16),
         }),
     )
   })
@@ -93,23 +88,25 @@ export const start = (
       scope: string
     }
     try {
-      response = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        body: new URLSearchParams({
-          code: code,
-          redirect_uri: revoke ? spotifyApiRevokeRedirectUri : spotifyApiAuthRedirectUri,
-          grant_type: 'authorization_code',
-        }),
-        headers: {
-          Authorization: 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64'),
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }).then((r) => r.json())
-    } catch (error) {
-      console.error(error)
-      return res.redirect(
-        appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: error?.toString() || 'unknown_error' }),
+      response = await authCodeToAccessToken(
+        code,
+        revoke ? spotifyApiRevokeRedirectUri : spotifyApiAuthRedirectUri,
+        clientId,
+        clientSecret,
       )
+    } catch (error) {
+      if (error instanceof CouldNotUseCodeToGetAccessTokenSpotifyError) {
+        console.error(error)
+        return res.redirect(
+          appRedirectUrl +
+            '?' +
+            new URLSearchParams({ ok: 'false', error: error?.toString() || 'cannot_use_code_to_get_access_token' }),
+        )
+      } else {
+        return res.redirect(
+          appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: error?.toString() || 'unknown_error' }),
+        )
+      }
     }
 
     let userId: string
@@ -123,7 +120,7 @@ export const start = (
     }
 
     if (revoke) {
-      await db.query('DELETE FROM credentials WHERE user_id = $1', [userId])
+      await deleteCredentials({ userId })
       return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_revoked' }))
     } else {
       try {
@@ -146,7 +143,7 @@ export const start = (
 
     let ok = false
     try {
-      await doIt(accessToken, refreshToken, clientId, clientSecret)
+      await sync(accessToken, refreshToken, clientId, clientSecret)
       ok = true
     } catch (e) {
       console.error(e)
