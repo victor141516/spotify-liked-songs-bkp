@@ -137,21 +137,6 @@ export const start = (
     }
   })
 
-  app.post('/api/snapshot', async (req, res) => {
-    const accessToken = req.body.access_token
-    const refreshToken = req.body.refresh_token
-
-    let ok = false
-    try {
-      await sync(accessToken, refreshToken, clientId, clientSecret)
-      ok = true
-    } catch (e) {
-      console.error(e)
-    }
-
-    res.send({ ok })
-  })
-
   app.listen(port, () => {
     console.log('Listening on port', port)
   })
