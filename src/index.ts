@@ -15,6 +15,7 @@ import * as db from './libraries/database'
 import * as server from './server'
 import * as worker from './worker'
 
+// TODO: dont remove Credential if access_token fails to update, get user, etc.
 const main = async () => {
   db.setUri(DATABASE_URI)
   await db.connect()

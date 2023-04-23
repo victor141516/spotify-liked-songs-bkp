@@ -1,5 +1,5 @@
 import console from 'console'
-import { deleteCredentials, save } from '../libraries/credentials'
+import { remove, save } from '../libraries/credentials'
 import {
   CouldNotAuthenticateSpotifyError,
   addTracksToPlaylist,
@@ -78,7 +78,7 @@ const _do = async (timeBetweenSnapshots: number) => {
       if (error instanceof CouldNotAuthenticateSpotifyError) {
         console.error('!!! Could not authenticate Spotify', error)
         console.log('- Deleting credentials. User ID:', credentials.id)
-        deleteCredentials({ id: credentials.id })
+        remove({ id: credentials.id })
       } else {
         console.error('!!! Unknown error while running', error)
       }
@@ -87,6 +87,7 @@ const _do = async (timeBetweenSnapshots: number) => {
   console.debug('!!! No more runs', new Date())
 }
 
+// TODO: have a different worker for the default playlist and the snapshots
 export const start = (runInterval: number, timeBetweenSnapshots: number) => {
   if (!spotifyApiData.clientId || !spotifyApiData.clientSecret) throw new Error('No Spotify API data set')
   _do(timeBetweenSnapshots)

@@ -2,7 +2,7 @@ import express, { Request } from 'express'
 import session from 'express-session'
 import { readFileSync } from 'fs'
 import { nanoid } from 'nanoid'
-import { deleteCredentials, save as saveCredentials } from '../libraries/credentials'
+import { remove as removeUser, save as saveUser } from '../libraries/credentials'
 import { CouldNotUseCodeToGetAccessTokenSpotifyError, authCodeToAccessToken, getUser } from '../libraries/spotify'
 
 const SPOTIFY_API_SCOPES = 'user-library-read playlist-modify-public'
@@ -120,11 +120,11 @@ export const start = (
     }
 
     if (revoke) {
-      await deleteCredentials({ userId })
+      await removeUser({ userId })
       return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_revoked' }))
     } else {
       try {
-        await saveCredentials(response, userId)
+        await saveUser(response, userId)
         return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'true', result: 'credentials_saved' }))
       } catch (error) {
         console.warn(error?.toString())
