@@ -2,7 +2,7 @@ export interface UserConfig {
   snapshotInterval: number
 }
 
-const DEFAULT_CONFIG: UserConfig = {
+export const DEFAULT_CONFIG: UserConfig = {
   snapshotInterval: 1,
 }
 

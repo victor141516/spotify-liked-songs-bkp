@@ -14,9 +14,6 @@ export const DATABASE_URI =
   'postgres://spotify-liked-songs-bkp:spotify-liked-songs-bkp@localhost:25432/spotify-liked-songs-bkp'
 export const MODE = (process.argv[2] || process.env.MODE || 'server') as 'server' | 'worker'
 export const RUN_INTERVAL = Number.parseInt(process.env.RUN_INTERVAL || (1000 * 60 * 60).toString())
-export const TIME_BETWEEN_SNAPSHOTS = Number.parseInt(
-  process.env.TIME_BETWEEN_SNAPSHOTS || (1000 * 60 * 60 * 24).toString(),
-)
 export const SESSION_SECRET = process.env.SESSION_SECRET || 'a-very-secret-secret'
 
 if (!CLIENT_ID) {

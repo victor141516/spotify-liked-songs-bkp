@@ -59,8 +59,8 @@ async function sync(accessToken: string, refreshToken: string, clientId: string,
   console.debug('- Old snapshots removed!')
 }
 
-const _do = async (timeBetweenSnapshots: number) => {
-  for await (const credentials of getNewRuns(timeBetweenSnapshots)) {
+const _do = async () => {
+  for await (const credentials of getNewRuns()) {
     console.debug('!!! New run', {
       ...credentials,
       access_token: credentials.access_token.slice(0, 10).concat('...'),
@@ -88,8 +88,8 @@ const _do = async (timeBetweenSnapshots: number) => {
 }
 
 // TODO: have a different worker for the default playlist and the snapshots
-export const start = (runInterval: number, timeBetweenSnapshots: number) => {
+export const start = (runInterval: number) => {
   if (!spotifyApiData.clientId || !spotifyApiData.clientSecret) throw new Error('No Spotify API data set')
-  _do(timeBetweenSnapshots)
+  _do()
   setInterval(_do, runInterval * 1000)
 }

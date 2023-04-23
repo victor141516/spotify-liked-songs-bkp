@@ -9,7 +9,6 @@ import {
   SESSION_SECRET,
   SPOTIFY_API_AUTH_REDIRECT_URI,
   SPOTIFY_API_REVOKE_REDIRECT_URI,
-  TIME_BETWEEN_SNAPSHOTS,
 } from './libraries/config'
 import * as db from './libraries/database'
 import * as server from './server'
@@ -22,7 +21,7 @@ const main = async () => {
 
   if (MODE === 'worker') {
     worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)
-    worker.start(RUN_INTERVAL, TIME_BETWEEN_SNAPSHOTS)
+    worker.start(RUN_INTERVAL)
   } else {
     await server.start(
       CLIENT_ID,
