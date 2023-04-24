@@ -12,6 +12,7 @@ export async function* getNewRuns(runType: RunType) {
   let query: Promise<QueryResult> | null = null
 
   if (runType === 'snapshot') {
+    // TODO: this is returning users that have disabled snapshots
     query = db.query(`
     SELECT
         *
@@ -24,10 +25,11 @@ export async function* getNewRuns(runType: RunType) {
           FULL JOIN credentials ON runs.credentials_id = credentials.id
         WHERE
           runs.type = 'snapshot'
-          AND COALESCE((credentials.config ->> 'snapshotIntervalEnabled')::boolean, ${DEFAULT_CONFIG.snapshotIntervalEnabled})
+          AND NOT COALESCE((credentials.config ->> 'snapshotIntervalEnabled')::boolean, ${DEFAULT_CONFIG.snapshotIntervalEnabled})
           AND date > NOW() - INTERVAL '1 day' * COALESCE((credentials.config ->> 'snapshotInterval')::int4, ${DEFAULT_CONFIG.snapshotInterval})
-      GROUP BY
-        credentials.id);`)
+        GROUP BY
+          credentials.id
+        );`)
   } else {
     query = db.query(`
     SELECT
