@@ -20,18 +20,17 @@ export interface CredentialsWithConfig extends Credentials {
 }
 
 export const save = async (credentials: Credentials, userId: string) => {
-  const { access_token: accessToken, refresh_token: refreshToken, config } = credentials
+  const { access_token: accessToken, refresh_token: refreshToken } = credentials
 
   return await db.query(
-    `INSERT INTO credentials (access_token, refresh_token, user_id, config)
-      VALUES($1, $2, $3, $4) ON CONFLICT (user_id)
+    `INSERT INTO credentials (access_token, refresh_token, user_id)
+      VALUES($1, $2, $3) ON CONFLICT (user_id)
       DO
       UPDATE
       SET
         access_token = $1,
-        refresh_token = $2,
-        config = $4`,
-    [accessToken, refreshToken, userId, JSON.stringify(fillWithDefaults(config))],
+        refresh_token = $2;`,
+    [accessToken, refreshToken, userId],
   )
 }
 
