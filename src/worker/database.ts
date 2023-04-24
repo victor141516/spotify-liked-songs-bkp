@@ -19,13 +19,13 @@ export async function* getNewRuns(runType: RunType) {
       FROM
         credentials
       WHERE
-        id NOT IN(
+        COALESCE((credentials.config ->> 'snapshotIntervalEnabled')::boolean, ${DEFAULT_CONFIG.snapshotIntervalEnabled})
+        AND id NOT IN(
           SELECT
             credentials.id FROM runs
           FULL JOIN credentials ON runs.credentials_id = credentials.id
         WHERE
           runs.type = 'snapshot'
-          AND NOT COALESCE((credentials.config ->> 'snapshotIntervalEnabled')::boolean, ${DEFAULT_CONFIG.snapshotIntervalEnabled})
           AND date > NOW() - INTERVAL '1 day' * COALESCE((credentials.config ->> 'snapshotInterval')::int4, ${DEFAULT_CONFIG.snapshotInterval})
         GROUP BY
           credentials.id

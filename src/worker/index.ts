@@ -112,7 +112,7 @@ const _do = async (
       }
     }
   }
-  console.debug('!!! No more runs', new Date())
+  console.debug(`!!! No more ${runType} runs`, new Date())
 }
 
 export const startSnapshotWorker = (runInterval: number) => {
