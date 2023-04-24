@@ -1,6 +1,6 @@
 import { QueryResult } from 'pg'
 import * as db from '../database'
-import { UserConfig, fillWithDefaults } from './config'
+import { DEFAULT_CONFIG, UserConfig, fillWithDefaults } from './config'
 
 // TODO: refactor the name from Credentials to User
 
@@ -23,14 +23,14 @@ export const save = async (credentials: Credentials, userId: string) => {
   const { access_token: accessToken, refresh_token: refreshToken } = credentials
 
   return await db.query(
-    `INSERT INTO credentials (access_token, refresh_token, user_id)
-      VALUES($1, $2, $3) ON CONFLICT (user_id)
+    `INSERT INTO credentials (access_token, refresh_token, user_id, config)
+      VALUES($1, $2, $3, $4) ON CONFLICT (user_id)
       DO
       UPDATE
       SET
         access_token = $1,
-        refresh_token = $2;`,
-    [accessToken, refreshToken, userId],
+        refresh_token = $2`,
+    [accessToken, refreshToken, userId, JSON.stringify(DEFAULT_CONFIG)],
   )
 }
 
