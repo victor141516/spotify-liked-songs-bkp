@@ -14,14 +14,18 @@ import * as db from './libraries/database'
 import * as server from './server'
 import * as worker from './worker'
 
+const stopHandlers: Array<() => void> = []
+
 // TODO: dont remove Credential if access_token fails to update, get user, etc.
 const main = async () => {
   db.setUri(DATABASE_URI)
   await db.connect()
+  stopHandlers.push(db.disconnect)
 
   if (MODE === 'worker') {
     worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)
-    worker.start(RUN_INTERVAL)
+    stopHandlers.push(worker.startSnapshotWorker(RUN_INTERVAL))
+    stopHandlers.push(worker.startDefaultPlaylistSyncWorker(RUN_INTERVAL))
   } else {
     await server.start(
       CLIENT_ID,
@@ -37,7 +41,7 @@ const main = async () => {
 
 const onExit = async () => {
   console.log('Bye!')
-  await db.disconnect()
+  stopHandlers.forEach((stopHandler) => stopHandler())
 }
 
 ;['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) =>

@@ -1,3 +1,5 @@
+import memoize from 'memoizee'
+
 const PLAYLIST_NAME = 'Liked Songs'
 
 export class SpotifyError {
@@ -6,7 +8,9 @@ export class SpotifyError {
 export class CouldNotAuthenticateSpotifyError extends SpotifyError {}
 export class CouldNotUseCodeToGetAccessTokenSpotifyError extends SpotifyError {}
 
-export async function getUser(
+// TODO: cache all these functions
+
+async function _getUser(
   accessToken: string,
   refreshToken: string,
   clientId: string,
@@ -44,13 +48,19 @@ export async function getUser(
       console.error('Error refreshing:', refreshResponse.status, await refreshResponse.text())
     }
   } else {
-    console.error('  - Unknown error getting user info:', response.status, await response.text())
+    console.error(
+      '  - Unknown error getting user info:',
+      response.status,
+      await response.text(),
+      'retry-after:',
+      response.headers.get('retry-after'),
+    )
   }
   console.debug('  - Access token does not work and could not be refreshed')
   throw new CouldNotAuthenticateSpotifyError(`Failed to get user ID (status: ${response.status})`)
 }
 
-export async function getLikedSongs(accessToken: string): Promise<string[]> {
+async function _getLikedSongs(accessToken: string): Promise<string[]> {
   let nextUrl = 'https://api.spotify.com/v1/me/tracks'
   const allSongs: string[] = []
   let count = 0
@@ -131,7 +141,7 @@ export async function addTracksToPlaylist(accessToken: string, playlistId: strin
   return batchJobs.every(Boolean)
 }
 
-export async function getAllPlaylists(accessToken: string) {
+async function _getAllPlaylists(accessToken: string) {
   const { items } = await fetch('https://api.spotify.com/v1/me/playlists', {
     headers: {
       Authorization: 'Bearer ' + accessToken,
@@ -174,8 +184,8 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
   for (let i = 0; i < allItems.length; i += 100) {
     batches.push(allItems.slice(i, i + 100))
   }
-  const cleaningJobs = batches.map((batch) =>
-    fetch(`https://api.spotify.com/v1/playlists/${defaultPlaylist}/tracks`, {
+  const cleaningJobs = batches.map((batch) => {
+    return fetch(`https://api.spotify.com/v1/playlists/${defaultPlaylist}/tracks`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -184,8 +194,8 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
       body: JSON.stringify({
         tracks: batch.map((id) => ({ uri: `spotify:track:${id}` })),
       }),
-    }),
-  )
+    })
+  })
   await Promise.all(cleaningJobs)
   console.debug('  - Default playlist reset!')
 
@@ -218,16 +228,16 @@ export async function removeOldSnapshots(accessToken: string, itemsToKeep: numbe
     console.debug('  - Filtered playlists!', playlistsToDelete.length, 'to delete')
     console.debug('  - Deleting playlists...')
     const results = await Promise.all(
-      playlistsToDelete.map((playlist) =>
-        fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/followers`, {
+      playlistsToDelete.map((playlist) => {
+        return fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/followers`, {
           method: 'DELETE',
           headers: {
             Authorization: 'Bearer ' + accessToken,
           },
         })
           .then((r) => r.text())
-          .then((t) => t === ''),
-      ),
+          .then((t) => t === '')
+      }),
     )
     console.debug('  - Deleted playlists!')
     return results.every(Boolean)
@@ -264,3 +274,9 @@ export async function authCodeToAccessToken(code: string, redirectUri: string, c
     throw new CouldNotUseCodeToGetAccessTokenSpotifyError(error?.toString() || 'Error using code to get access token')
   }
 }
+
+const cacheMaxAge = 10 * 60 * 1000 // 10 minutes
+
+export const getUser = memoize(_getUser, { maxAge: cacheMaxAge })
+export const getLikedSongs = memoize(_getLikedSongs, { maxAge: cacheMaxAge })
+export const getAllPlaylists = memoize(_getAllPlaylists, { maxAge: cacheMaxAge })

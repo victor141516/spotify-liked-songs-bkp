@@ -1,22 +1,15 @@
 import express, { Request } from 'express'
 import session from 'express-session'
-import { readFileSync } from 'fs'
 import { nanoid } from 'nanoid'
-import { remove as removeUser, save as saveUser } from '../libraries/credentials'
-import { CouldNotUseCodeToGetAccessTokenSpotifyError, authCodeToAccessToken, getUser } from '../libraries/spotify'
+import { get as getUser, remove as removeUser, saveConfig, save as saveUser } from '../libraries/credentials'
+import {
+  CouldNotUseCodeToGetAccessTokenSpotifyError,
+  authCodeToAccessToken,
+  getUser as getSpotifuUser,
+} from '../libraries/spotify'
 
 const SPOTIFY_API_SCOPES = 'user-library-read playlist-modify-public'
-
-const frontendFileNames = ['home.html', 'callback.html'] as const
-const frontendFiles = frontendFileNames
-  .map((filename) => ({
-    filename,
-    content: readFileSync(`src/server/frontend/${filename}`, 'utf8'),
-  }))
-  .reduce(
-    (acc, { filename, content }) => ({ ...acc, [filename]: content }),
-    {} as Record<(typeof frontendFileNames)[number], string>,
-  )
+const AUTH_ROUTES = ['/me', '/api/config']
 
 export const start = (
   clientId: string,
@@ -29,20 +22,11 @@ export const start = (
 ) => {
   const app = express()
   app.use(express.json())
-  app.use('/static', express.static('src/server/frontend/static'))
 
-  // TODO: add session store
+  // TODO: configure sessions to store on postgres
   app.use(session({ secret: sessionSecret, resave: false, saveUninitialized: false }))
 
-  const getSession = <T>(req: Request) => req.session as T
-
-  app.get('/', async (req, res) => {
-    res.send(frontendFiles['home.html'])
-  })
-
-  app.get('/callback', async (req, res) => {
-    res.send(frontendFiles['callback.html'])
-  })
+  const getSession = <T>(req: Request) => req.session as T | Record<string, never>
 
   app.get('/auth/login', async (req, res) => {
     return res.redirect(
@@ -112,12 +96,14 @@ export const start = (
     let userId: string
 
     try {
-      const userResponse = await getUser(response.access_token, response.refresh_token, clientId, clientSecret)
+      const userResponse = await getSpotifuUser(response.access_token, response.refresh_token, clientId, clientSecret)
       userId = userResponse.userId
     } catch (error) {
       console.warn(error)
       return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: 'refresh_error' }))
     }
+
+    getSession<{ userId: string }>(req).userId = userId
 
     if (revoke) {
       await removeUser({ userId })
@@ -136,6 +122,37 @@ export const start = (
       }
     }
   })
+
+  app.use(AUTH_ROUTES, async (req, res, next) => {
+    const session = getSession<{ userId?: string }>(req)
+    if (!session.userId) {
+      return res.redirect('/')
+    }
+    return next()
+  })
+
+  app.get('/api/config', async (req, res) => {
+    const session = getSession<{ userId: string }>(req)
+    const { config } = await getUser({ userId: session.userId })
+    return res.send(config)
+  })
+
+  app.post('/api/config', async (req, res) => {
+    const session = getSession<{ userId: string }>(req)
+    const postBody = req.body as {
+      snapshotIntervalEnabled: boolean
+      snapshotInterval: number
+    }
+    try {
+      await saveConfig(postBody, session.userId)
+      return res.send({ ok: true })
+    } catch (error) {
+      console.error('Error saving config for user', session.userId, error?.toString())
+      return res.send({ ok: false, error: 'could_not_save_config' })
+    }
+  })
+
+  app.use(express.static('src/server/frontend/dist'))
 
   app.listen(port, () => {
     console.log('Listening on port', port)

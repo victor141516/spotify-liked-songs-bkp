@@ -1,10 +1,31 @@
 export interface UserConfig {
   snapshotInterval: number
+  snapshotIntervalEnabled: boolean
+  defaultPlaylistSyncInterval: number
 }
 
 export const DEFAULT_CONFIG: UserConfig = {
-  snapshotInterval: 1,
+  snapshotInterval: 1, // days
+  snapshotIntervalEnabled: true,
+  defaultPlaylistSyncInterval: 10, // minutes
 }
 
-export const fillWithDefaults = (config: Record<string, unknown>): UserConfig =>
-  Object.assign({}, DEFAULT_CONFIG, config)
+const trimConfig = (config: Record<string, unknown>): Partial<UserConfig> => {
+  const sourceCopy = Object.assign({}, config)
+  Object.keys(DEFAULT_CONFIG).forEach((key) => {
+    if (!(key in sourceCopy)) {
+      delete sourceCopy[key]
+    }
+  })
+  if (sourceCopy.snapshotInterval && typeof sourceCopy.snapshotInterval === 'number') {
+    sourceCopy.snapshotInterval = Math.max(1, sourceCopy.snapshotInterval)
+  }
+  if (sourceCopy.defaultPlaylistSyncInterval && typeof sourceCopy.defaultPlaylistSyncInterval === 'number') {
+    sourceCopy.defaultPlaylistSyncInterval = Math.max(10, sourceCopy.defaultPlaylistSyncInterval)
+  }
+  return sourceCopy
+}
+
+// TODO: rename this function and maybe merge it with trimConfig
+export const fillWithDefaults = (config: UserConfig | Record<string, unknown> | undefined): UserConfig =>
+  Object.assign({}, DEFAULT_CONFIG, trimConfig((config ?? {}) as Record<string, unknown>))
