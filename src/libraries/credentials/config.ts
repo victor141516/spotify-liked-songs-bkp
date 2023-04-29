@@ -18,10 +18,13 @@ const trimConfig = (config: Record<string, unknown>): Partial<UserConfig> => {
     }
   })
   if (sourceCopy.snapshotInterval && typeof sourceCopy.snapshotInterval === 'number') {
-    sourceCopy.snapshotInterval = Math.max(1, sourceCopy.snapshotInterval)
+    sourceCopy.snapshotInterval = Math.max(DEFAULT_CONFIG.snapshotInterval, sourceCopy.snapshotInterval)
   }
   if (sourceCopy.defaultPlaylistSyncInterval && typeof sourceCopy.defaultPlaylistSyncInterval === 'number') {
-    sourceCopy.defaultPlaylistSyncInterval = Math.max(10, sourceCopy.defaultPlaylistSyncInterval)
+    sourceCopy.defaultPlaylistSyncInterval = Math.max(
+      DEFAULT_CONFIG.defaultPlaylistSyncInterval,
+      sourceCopy.defaultPlaylistSyncInterval,
+    )
   }
   return sourceCopy
 }

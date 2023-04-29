@@ -6,11 +6,13 @@ import { onMounted, reactive } from 'vue'
 interface Data {
   snapshotIntervalEnabled: boolean
   snapshotInterval: number
+  defaultPlaylistSyncInterval: number
 }
 
 const formDataState = reactive<Data>({
   snapshotIntervalEnabled: true,
-  snapshotInterval: 1
+  snapshotInterval: 1,
+  defaultPlaylistSyncInterval: 10
 })
 const state = reactive({
   submitDisabled: false,
@@ -25,6 +27,7 @@ onMounted(async () => {
   const data = await fetch('/api/config').then((res) => res.json())
   formDataState.snapshotInterval = data.snapshotInterval
   formDataState.snapshotIntervalEnabled = data.snapshotIntervalEnabled
+  formDataState.defaultPlaylistSyncInterval = data.defaultPlaylistSyncInterval
   state.dataFetched = true
 })
 
@@ -40,6 +43,12 @@ const onSubmit = async (e: Event) => {
     data.snapshotInterval = Number.parseInt(data.snapshotInterval ?? '1') ?? 1
   } catch (e) {
     data.snapshotInterval = 1
+  }
+  try {
+    data.defaultPlaylistSyncInterval =
+      Number.parseInt(data.defaultPlaylistSyncInterval ?? '10') ?? 10
+  } catch (e) {
+    data.defaultPlaylistSyncInterval = 10
   }
   state.submitDisabled = true
   const result = await fetch('/api/config', {
@@ -58,31 +67,49 @@ const onSubmit = async (e: Event) => {
   <BaseCard v-if="state.dataFetched">
     <form @submit.prevent="onSubmit" class="flex flex-col gap-4 items-center">
       <div class="flex flex-col gap-2">
-        <div>
-          <input
-            v-model="formDataState.snapshotIntervalEnabled"
-            type="checkbox"
-            id="snapshotIntervalEnabled"
-            name="snapshotIntervalEnabled"
-            class="w-12 text-center"
-          />
-          <label for="snapshotIntervalEnabled">Enable snapshots</label>
-        </div>
-        <div>
-          <input
-            :disabled="!formDataState.snapshotIntervalEnabled"
-            v-model="formDataState.snapshotInterval"
-            type="number"
-            min="1"
-            step="1"
-            id="snapshotInterval"
-            name="snapshotInterval"
-            class="w-12 text-center disabled:opacity-50 peer"
-          />
-          <label for="snapshotInterval" class="peer-disabled:opacity-50"
-            >Time between snapshots</label
-          >
-        </div>
+        <fieldset>
+          <legend class="text-xl mb-1">Sync</legend>
+          <div>
+            <input
+              v-model="formDataState.defaultPlaylistSyncInterval"
+              type="number"
+              min="10"
+              step="1"
+              id="defaultPlaylistSyncInterval"
+              name="defaultPlaylistSyncInterval"
+              class="w-12 text-center pl-4"
+            />
+            <label for="defaultPlaylistSyncInterval">Time between syncs (minutes)</label>
+          </div>
+        </fieldset>
+        <fieldset class="mt-4">
+          <legend class="text-xl mb-1">Snapshots</legend>
+          <div>
+            <input
+              v-model="formDataState.snapshotIntervalEnabled"
+              type="checkbox"
+              id="snapshotIntervalEnabled"
+              name="snapshotIntervalEnabled"
+              class="w-12 text-center"
+            />
+            <label for="snapshotIntervalEnabled">Enable snapshots</label>
+          </div>
+          <div>
+            <input
+              :disabled="!formDataState.snapshotIntervalEnabled"
+              v-model="formDataState.snapshotInterval"
+              type="number"
+              min="1"
+              step="1"
+              id="snapshotInterval"
+              name="snapshotInterval"
+              class="w-12 text-center disabled:opacity-50 peer pl-4"
+            />
+            <label for="snapshotInterval" class="peer-disabled:opacity-50"
+              >Time between snapshots (days)</label
+            >
+          </div>
+        </fieldset>
       </div>
       <SpotifyButton
         :disabled="state.submitDisabled"
