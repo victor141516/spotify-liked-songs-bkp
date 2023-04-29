@@ -29,6 +29,5 @@ const trimConfig = (config: Record<string, unknown>): Partial<UserConfig> => {
   return sourceCopy
 }
 
-// TODO: rename this function and maybe merge it with trimConfig
-export const fillWithDefaults = (config: UserConfig | Record<string, unknown> | undefined): UserConfig =>
+export const sanitize = (config: UserConfig | Record<string, unknown> | undefined): UserConfig =>
   Object.assign({}, DEFAULT_CONFIG, trimConfig((config ?? {}) as Record<string, unknown>))

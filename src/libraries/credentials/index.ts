@@ -1,6 +1,6 @@
 import { QueryResult } from 'pg'
 import * as db from '../database'
-import { DEFAULT_CONFIG, UserConfig, fillWithDefaults } from './config'
+import { DEFAULT_CONFIG, UserConfig, sanitize } from './config'
 
 // TODO: refactor the name from Credentials to User
 
@@ -42,7 +42,7 @@ export const saveConfig = async (config: Record<string, unknown>, userId: string
         config = $1
       WHERE
         user_id = $2`,
-    [JSON.stringify(fillWithDefaults(config)), userId],
+    [JSON.stringify(sanitize(config)), userId],
   )
 }
 
@@ -64,5 +64,5 @@ export const get = async ({ id, userId }: { userId: string; id?: undefined } | {
   }
   if (!result || result.rows.length === 0) throw new CannotGetUserError('no_user_found')
 
-  return { ...result.rows[0], config: fillWithDefaults(result.rows[0].config) } as CredentialsWithConfig
+  return { ...result.rows[0], config: sanitize(result.rows[0].config) } as CredentialsWithConfig
 }
