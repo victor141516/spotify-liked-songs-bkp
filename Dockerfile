@@ -15,7 +15,7 @@ RUN npm run build
 FROM node:18-alpine
 WORKDIR /app
 COPY --from=build-backend /app/package.json /app/package-lock.json /app/
-RUN npm ci --production
+RUN npm ci --only=dev
 COPY --from=build-backend /app/dist /app
 COPY --from=build-frontend /app/dist /app/server/frontend/dist
 ENTRYPOINT ["node", "--experimental-specifier-resolution=node", "index.js"]
