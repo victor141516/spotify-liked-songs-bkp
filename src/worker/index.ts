@@ -123,13 +123,15 @@ async function* _do(
   console.debug(`!!! No more ${runType} runs`, new Date())
 }
 
-export const startSnapshotWorker = (runInterval: number) => {
+const RUNS = { snapshot, defaultPlaylistSync } as const
+
+export const _service = (runInterval: number, runType: RunType) => {
   if (!spotifyApiData.clientId || !spotifyApiData.clientSecret) throw new Error('No Spotify API data set')
   let stop = false
   ;(async () => {
     while (true) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for await (const iterator of _do('snapshot', snapshot)) {
+      for await (const iterator of _do(runType, RUNS[runType])) {
         if (stop) return
       }
       await sleep(runInterval * 1000)
@@ -140,19 +142,5 @@ export const startSnapshotWorker = (runInterval: number) => {
   }
 }
 
-export const startDefaultPlaylistSyncWorker = (runInterval: number) => {
-  if (!spotifyApiData.clientId || !spotifyApiData.clientSecret) throw new Error('No Spotify API data set')
-  let stop = false
-  ;(async () => {
-    while (true) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for await (const iterator of _do('defaultPlaylistSync', defaultPlaylistSync)) {
-        if (stop) return
-      }
-      await sleep(runInterval * 1000)
-    }
-  })()
-  return () => {
-    stop = true
-  }
-}
+export const startSnapshotWorker = (runInterval: number) => _service(runInterval, 'snapshot')
+export const startDefaultPlaylistSyncWorker = (runInterval: number) => _service(runInterval, 'defaultPlaylistSync')
