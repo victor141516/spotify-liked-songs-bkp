@@ -19,7 +19,8 @@ const stopHandlers: Array<() => void> = []
 const main = async () => {
   db.setUri(DATABASE_URI)
   await db.connect()
-  stopHandlers.push(db.disconnect)
+  stopHandlers.push(() => db.getClient().end())
+  stopHandlers.push(() => db.disconnect())
 
   if (MODE === 'worker') {
     worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)

@@ -1,7 +1,9 @@
+import pgSessionStore from 'connect-pg-simple'
 import express, { Request } from 'express'
 import session from 'express-session'
 import { nanoid } from 'nanoid'
 import { get as getUser, remove as removeUser, saveConfig, save as saveUser } from '../libraries/credentials'
+import { getClient } from '../libraries/database'
 import {
   CouldNotUseCodeToGetAccessTokenSpotifyError,
   authCodeToAccessToken,
@@ -23,8 +25,17 @@ export const start = (
   const app = express()
   app.use(express.json())
 
-  // TODO: configure sessions to store on postgres
-  app.use(session({ secret: sessionSecret, resave: false, saveUninitialized: false }))
+  app.use(
+    session({
+      store: new (pgSessionStore(session))({
+        createTableIfMissing: true,
+        pool: getClient(),
+      }),
+      secret: sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+    }),
+  )
 
   const getSession = <T>(req: Request) => req.session as T | Record<string, never>
 
