@@ -1,5 +1,5 @@
 import console from 'console'
-import { remove, save } from '../libraries/credentials'
+import { save } from '../libraries/credentials'
 import {
   CouldNotAuthenticateSpotifyError,
   addTracksToPlaylist,
@@ -105,8 +105,8 @@ const _do = async (
     } catch (error) {
       if (error instanceof CouldNotAuthenticateSpotifyError) {
         console.error('!!! Could not authenticate Spotify', error)
-        console.log('- Deleting credentials. User ID:', credentials.id)
-        remove({ id: credentials.id })
+        // console.log('- Deleting credentials. User ID:', credentials.id)
+        // remove({ id: credentials.id })
       } else {
         console.error('!!! Unknown error while running', error)
       }
