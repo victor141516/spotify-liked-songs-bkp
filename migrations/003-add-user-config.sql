@@ -1,0 +1,1 @@
+ALTER TABLE "public"."credentials" ADD COLUMN "config" jsonb NOT NULL;

@@ -12,7 +12,6 @@ export async function* getNewRuns(runType: RunType) {
   let query: Promise<QueryResult> | null = null
 
   if (runType === 'snapshot') {
-    // TODO: this is returning users that have disabled snapshots
     query = db.query(`
     SELECT
         *

@@ -1,0 +1,1 @@
+ALTER TABLE "public"."runs" ADD COLUMN "type" text NOT NULL DEFAULT 'defaultPlaylistSync';

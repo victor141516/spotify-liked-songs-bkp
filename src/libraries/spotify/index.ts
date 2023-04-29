@@ -8,8 +8,6 @@ export class SpotifyError {
 export class CouldNotAuthenticateSpotifyError extends SpotifyError {}
 export class CouldNotUseCodeToGetAccessTokenSpotifyError extends SpotifyError {}
 
-// TODO: cache all these functions
-
 async function _getUser(
   accessToken: string,
   refreshToken: string,
