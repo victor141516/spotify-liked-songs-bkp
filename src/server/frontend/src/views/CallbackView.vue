@@ -1,49 +1,59 @@
 <script setup lang="ts">
 import SpotifyButton from '@/components/SpotifyButton.vue'
-import { onMounted } from 'vue'
+import { onMounted, reactive, ref, watchEffect } from 'vue'
 
-// TODO: refactor this vanilla js to vue
+const RESULT_MESSAGES = {
+  credentials_revoked: 'You thought you could leve without saying goodbye?',
+  credentials_saved:
+    'Now your liked songs playlist will be kept in sync with your new playlist 🎉. It might take a few minutes for the first sync to happen. You can close this window now.'
+} as const
+const ERROR_MESSAGES = {
+  could_not_save_credentials: 'Could not save your credentials',
+  refresh_error: 'Error getting your user information'
+} as const
+
+const params = ref<null | {
+  get: ((key: 'ok') => 'true' | 'false' | null) &
+    ((key: 'result') => keyof typeof RESULT_MESSAGES | null) &
+    ((key: 'error') => keyof typeof ERROR_MESSAGES | null)
+}>()
+
 onMounted(() => {
-  const params = new URLSearchParams(location.search)
+  params.value = new URLSearchParams(location.search) as any
+})
 
-  if (params.get('ok') !== 'true') {
-    const errorCode = params.get('error')
-    const errorMessageElement = document.getElementById('error-message')
-    const errorElement = document.getElementById('error')
-    errorMessageElement!.innerText =
-      {
-        could_not_save_credentials: 'Could not save your credentials',
-        refresh_error: 'Error getting your user information'
-      }[errorCode!] ?? errorCode!
-    errorElement!.classList.remove('hidden')
-  } else {
-    const resultMessageElement = document.getElementById('result-message')
-    const resultElement = document.getElementById('result')
-    const result = params.get('result')
-    resultMessageElement!.innerText =
-      {
-        credentials_revoked: 'You thought you could leve without saying goodbye?',
-        credentials_saved:
-          'Now your liked songs playlist will be kept in sync with your new playlist 🎉. It might take a few minutes for the first sync to happen. You can close this window now.'
-      }[result!] ?? result!
-    resultElement!.classList.remove('hidden')
+const state = reactive({
+  errorMessage: '',
+  resultMessage: '',
+  showGoodbye: false
+})
+
+watchEffect(() => {
+  if (!params.value) return
+  const ok = params.value.get('ok') === 'true'
+
+  if (ok) {
+    const result = params.value.get('result')
+    state.resultMessage = RESULT_MESSAGES[result!] ?? result!
     if (result === 'credentials_revoked') {
-      document.getElementById('goodbye')!.classList.remove('hidden')
+      state.showGoodbye = true
     }
+  } else {
+    const errorCode = params.value.get('error')
+    state.errorMessage = ERROR_MESSAGES[errorCode!] ?? errorCode!
   }
 })
 </script>
 
 <template>
-  <div id="result" class="hidden">
+  <div v-if="state.resultMessage" class="text-center flex flex-col items-center gap-5">
     <h1 id="header" class="text-center">Done!</h1>
-    <p id="result-message"></p>
+    <p>{{ state.resultMessage }}</p>
     <RouterLink :to="{ name: 'config' }">
       <SpotifyButton type="button">Go to Settings</SpotifyButton>
     </RouterLink>
     <video
-      id="goodbye"
-      class="hidden"
+      v-if="state.showGoodbye"
       muted
       loop
       autoplay="true"
@@ -52,7 +62,7 @@ onMounted(() => {
       src="/goodbye.mp4"
     />
   </div>
-  <div id="error" class="hidden">
+  <div v-if="state.errorMessage" class="text-center flex flex-col items-center gap-5">
     <h1 class="text-center">Something went wrong 🙁</h1>
     <p>
       Please
@@ -61,13 +71,6 @@ onMounted(() => {
       >
       and attach the error bellow
     </p>
-    <code id="error-message" class="text-lg"></code>
+    <code class="text-lg">{{ state.errorMessage }}</code>
   </div>
 </template>
-
-<style scoped>
-#result:not(.hidden),
-#error:not(.hidden) {
-  @apply text-center flex flex-col items-center gap-5;
-}
-</style>
