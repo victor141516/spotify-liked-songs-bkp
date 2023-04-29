@@ -146,7 +146,7 @@ export const startDefaultPlaylistSyncWorker = (runInterval: number) => {
   ;(async () => {
     while (true) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for await (const iterator of _do('defaultPlaylistSync', snapshot)) {
+      for await (const iterator of _do('defaultPlaylistSync', defaultPlaylistSync)) {
         if (stop) return
       }
       await sleep(runInterval * 1000)
