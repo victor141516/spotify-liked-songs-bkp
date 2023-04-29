@@ -163,7 +163,8 @@ export const start = (
     }
   })
 
-  app.use(express.static('src/server/frontend/dist'))
+  const frontendPath = new URL('frontend/dist', import.meta.url).pathname
+  app.use(express.static(frontendPath))
 
   app.listen(port, () => {
     console.log('Listening on port', port)
