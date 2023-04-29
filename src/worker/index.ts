@@ -133,7 +133,6 @@ export const startSnapshotWorker = (runInterval: number) => {
         if (stop) return
       }
       await sleep(runInterval * 1000)
-      process.exit(0)
     }
   })()
   return () => {
