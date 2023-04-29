@@ -1,7 +1,9 @@
 import console from 'console'
 import { save } from '../libraries/credentials'
+import { isInstance, sleep } from '../libraries/misc'
 import {
   CouldNotAuthenticateSpotifyError,
+  RateLimitExceededSpotifyError,
   addTracksToPlaylist,
   createSnapshotPlaylist,
   getLikedSongs,
@@ -84,10 +86,10 @@ async function snapshot(accessToken: string, refreshToken: string, clientId: str
   console.debug('- Old snapshots removed!')
 }
 
-const _do = async (
+async function* _do(
   runType: RunType,
   job: (accessToken: string, refreshToken: string, clientId: string, clientSecret: string) => Promise<void>,
-) => {
+) {
   for await (const credentials of getNewRuns(runType)) {
     console.debug(`!!! New ${runType} run`, {
       ...credentials,
@@ -108,23 +110,50 @@ const _do = async (
         // console.log('- Deleting credentials. User ID:', credentials.id)
         // remove({ id: credentials.id })
       } else {
-        console.error('!!! Unknown error while running', error)
+        if (isInstance(error, RateLimitExceededSpotifyError)) {
+          console.warn('!!! Rate limit exceeded. Waiting seconds', error.retryAfter)
+          await sleep(error.retryAfter * 1000)
+        } else {
+          console.error('!!! Unknown error while running', error)
+        }
       }
     }
+    yield
   }
   console.debug(`!!! No more ${runType} runs`, new Date())
 }
 
 export const startSnapshotWorker = (runInterval: number) => {
   if (!spotifyApiData.clientId || !spotifyApiData.clientSecret) throw new Error('No Spotify API data set')
-  _do('snapshot', snapshot)
-  const loop = setInterval(() => _do('snapshot', snapshot), runInterval * 1000)
-  return () => clearInterval(loop)
+  let stop = false
+  ;(async () => {
+    while (true) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const iterator of _do('snapshot', snapshot)) {
+        if (stop) return
+      }
+      await sleep(runInterval * 1000)
+      process.exit(0)
+    }
+  })()
+  return () => {
+    stop = true
+  }
 }
 
 export const startDefaultPlaylistSyncWorker = (runInterval: number) => {
   if (!spotifyApiData.clientId || !spotifyApiData.clientSecret) throw new Error('No Spotify API data set')
-  _do('defaultPlaylistSync', defaultPlaylistSync)
-  const loop = setInterval(() => _do('defaultPlaylistSync', defaultPlaylistSync), runInterval * 1000)
-  return () => clearInterval(loop)
+  let stop = false
+  ;(async () => {
+    while (true) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const iterator of _do('defaultPlaylistSync', snapshot)) {
+        if (stop) return
+      }
+      await sleep(runInterval * 1000)
+    }
+  })()
+  return () => {
+    stop = true
+  }
 }

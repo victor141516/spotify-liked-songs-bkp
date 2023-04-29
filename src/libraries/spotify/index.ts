@@ -7,6 +7,20 @@ export class SpotifyError {
 }
 export class CouldNotAuthenticateSpotifyError extends SpotifyError {}
 export class CouldNotUseCodeToGetAccessTokenSpotifyError extends SpotifyError {}
+export class RateLimitExceededSpotifyError extends SpotifyError {
+  constructor(public retryAfter: number) {
+    super('Rate limit exceeded')
+  }
+}
+
+const rateLimitHandledFetch = async (url: string, options: RequestInit = {}) => {
+  const response = await fetch(url, options)
+  if (response.status === 429) {
+    const retryAfter = Number(response.headers.get('Retry-After'))
+    throw new RateLimitExceededSpotifyError(retryAfter)
+  }
+  return response
+}
 
 async function _getUser(
   accessToken: string,
@@ -16,7 +30,7 @@ async function _getUser(
 ): Promise<{ userId: string; accessToken: string }> {
   const meUrl = 'https://api.spotify.com/v1/me'
   const headers = { Authorization: `Bearer ${accessToken}` }
-  const response = await fetch(meUrl, { headers })
+  const response = await rateLimitHandledFetch(meUrl, { headers })
   if (response.ok) {
     console.debug('  - Access token works! no need to refresh')
     const { id: userId } = (await response.json()) as { id: string }
@@ -32,7 +46,7 @@ async function _getUser(
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
     }
-    const refreshResponse = await fetch(refreshUrl, {
+    const refreshResponse = await rateLimitHandledFetch(refreshUrl, {
       method: 'POST',
       headers: refreshHeaders,
       body: new URLSearchParams(refreshData),
@@ -64,7 +78,7 @@ async function _getLikedSongs(accessToken: string): Promise<string[]> {
   let count = 0
   while (nextUrl) {
     console.debug('  - Getting liked songs... ', ++count)
-    const likedSongsResponse = await fetch(nextUrl, {
+    const likedSongsResponse = await rateLimitHandledFetch(nextUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -86,7 +100,7 @@ export function generatePlaylistName(daysFromNow: number) {
 }
 
 export async function createPlaylist(accessToken: string, name: string) {
-  const { id } = await fetch(`https://api.spotify.com/v1/me/playlists`, {
+  const { id } = await rateLimitHandledFetch(`https://api.spotify.com/v1/me/playlists`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -124,7 +138,7 @@ export async function addTracksToPlaylist(accessToken: string, playlistId: strin
 
   const batchJobs: boolean[] = []
   for (const batch of batches) {
-    const res = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+    const res = await rateLimitHandledFetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -140,7 +154,7 @@ export async function addTracksToPlaylist(accessToken: string, playlistId: strin
 }
 
 async function _getAllPlaylists(accessToken: string) {
-  const { items } = await fetch('https://api.spotify.com/v1/me/playlists', {
+  const { items } = await rateLimitHandledFetch('https://api.spotify.com/v1/me/playlists', {
     headers: {
       Authorization: 'Bearer ' + accessToken,
     },
@@ -165,7 +179,7 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
   let count = 0
   while (nextUrl) {
     console.debug('  - Getting default playlist tracks... ', ++count)
-    const { next, items } = await fetch(nextUrl, {
+    const { next, items } = await rateLimitHandledFetch(nextUrl, {
       headers: {
         Authorization: 'Bearer ' + accessToken,
       },
@@ -183,7 +197,7 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
     batches.push(allItems.slice(i, i + 100))
   }
   const cleaningJobs = batches.map((batch) => {
-    return fetch(`https://api.spotify.com/v1/playlists/${defaultPlaylist}/tracks`, {
+    return rateLimitHandledFetch(`https://api.spotify.com/v1/playlists/${defaultPlaylist}/tracks`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -227,7 +241,7 @@ export async function removeOldSnapshots(accessToken: string, itemsToKeep: numbe
     console.debug('  - Deleting playlists...')
     const results = await Promise.all(
       playlistsToDelete.map((playlist) => {
-        return fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/followers`, {
+        return rateLimitHandledFetch(`https://api.spotify.com/v1/playlists/${playlist.id}/followers`, {
           method: 'DELETE',
           headers: {
             Authorization: 'Bearer ' + accessToken,
@@ -247,7 +261,7 @@ export async function removeOldSnapshots(accessToken: string, itemsToKeep: numbe
 }
 export async function authCodeToAccessToken(code: string, redirectUri: string, clientId: string, clientSecret: string) {
   try {
-    return await fetch('https://accounts.spotify.com/api/token', {
+    return await rateLimitHandledFetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
       body: new URLSearchParams({
         code: code,
