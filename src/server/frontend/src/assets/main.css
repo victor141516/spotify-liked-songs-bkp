@@ -1,17 +1,31 @@
-@import './old.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  @apply bg-dark font-sans p-4;
+}
+
+main {
+  @apply flex flex-col items-center gap-10;
+}
+
+h1 {
+  @apply text-5xl font-bold text-white text-center;
+}
+
+h2 {
+  @apply text-3xl font-bold text-white;
+}
+
+p {
+  @apply text-white leading-normal;
+}
 
 a {
   @apply text-spotify underline;
 }
 
-h1 {
-  @apply text-5xl font-bold;
-}
-
-h2 {
-  @apply text-3xl font-bold;
+code {
+  @apply bg-dark-light text-white py-1 px-2 rounded-3xl font-semibold max-w-fit;
 }

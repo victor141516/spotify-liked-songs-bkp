@@ -36,7 +36,7 @@ onMounted(() => {
 
 <template>
   <div id="result" class="hidden">
-    <h1 id="header" class="text-white text-center">Done!</h1>
+    <h1 id="header" class="text-center">Done!</h1>
     <p id="result-message"></p>
     <RouterLink :to="{ name: 'config' }">
       <SpotifyButton type="button">Go to Settings</SpotifyButton>
@@ -53,7 +53,7 @@ onMounted(() => {
     />
   </div>
   <div id="error" class="hidden">
-    <h1>Something went wrong 🙁</h1>
+    <h1 class="text-center">Something went wrong 🙁</h1>
     <p>
       Please
       <a href="https://github.com/victor141516/spotify-liked-songs-bkp/issues/new/choose"
@@ -61,6 +61,13 @@ onMounted(() => {
       >
       and attach the error bellow
     </p>
-    <code id="error-message"></code>
+    <code id="error-message" class="text-lg"></code>
   </div>
 </template>
+
+<style scoped>
+#result:not(.hidden),
+#error:not(.hidden) {
+  @apply text-center flex flex-col align-center gap-5;
+}
+</style>
