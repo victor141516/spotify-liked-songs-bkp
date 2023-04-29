@@ -18,6 +18,10 @@ const state = reactive({
 })
 
 onMounted(async () => {
+  if (import.meta.env.DEV) {
+    state.dataFetched = true
+    return
+  }
   const data = await fetch('/api/config').then((res) => res.json())
   formDataState.snapshotInterval = data.snapshotInterval
   formDataState.snapshotIntervalEnabled = data.snapshotIntervalEnabled

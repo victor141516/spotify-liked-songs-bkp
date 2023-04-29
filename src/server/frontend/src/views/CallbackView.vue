@@ -68,6 +68,6 @@ onMounted(() => {
 <style scoped>
 #result:not(.hidden),
 #error:not(.hidden) {
-  @apply text-center flex flex-col align-center gap-5;
+  @apply text-center flex flex-col items-center gap-5;
 }
 </style>
