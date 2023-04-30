@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import loadingImage from '@/assets/loading.svg?url'
+import tickImage from '@/assets/tick.svg?url'
 import BaseCard from '@/components/BaseCard.vue'
 import SpotifyButton from '@/components/SpotifyButton.vue'
 import { onMounted, reactive } from 'vue'
@@ -16,7 +18,9 @@ const formDataState = reactive<Data>({
 })
 const state = reactive({
   submitDisabled: false,
-  dataFetched: false
+  dataFetched: false,
+  sendingRequest: false,
+  requestSent: false
 })
 
 onMounted(async () => {
@@ -50,16 +54,26 @@ const onSubmit = async (e: Event) => {
   } catch (e) {
     data.defaultPlaylistSyncInterval = 10
   }
-  state.submitDisabled = true
-  const result = await fetch('/api/config', {
-    method: 'POST',
-    body: JSON.stringify(data as Data),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }).then((res) => res.json())
-  console.log('config save result', result)
-  state.submitDisabled = false
+
+  state.sendingRequest = true
+  if (import.meta.env.DEV) {
+    // alert(`Send config: \n${JSON.stringify(data, null, 2)}`)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  } else {
+    const result = await fetch('/api/config', {
+      method: 'POST',
+      body: JSON.stringify(data as Data),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then((res) => res.json())
+    console.log('config save result', result)
+  }
+  state.sendingRequest = false
+  state.requestSent = true
+  setTimeout(() => {
+    state.requestSent = false
+  }, 1000)
 }
 </script>
 
@@ -111,13 +125,28 @@ const onSubmit = async (e: Event) => {
           </div>
         </fieldset>
       </div>
-      <SpotifyButton
-        :disabled="state.submitDisabled"
-        type="button"
-        :submit="true"
-        class="bg-spotify"
-        >Save</SpotifyButton
-      >
+      <div class="w-40 mx-auto flex">
+        <SpotifyButton
+          class="mx-auto !h-11 transition-all flex items-center"
+          :class="state.sendingRequest || state.requestSent ? '!w-11 !p-0' : '!w-full'"
+          :disabled="state.submitDisabled || state.sendingRequest || state.requestSent"
+          type="button"
+          :submit="true"
+        >
+          <img
+            :src="state.sendingRequest ? loadingImage : tickImage"
+            class="h-4 mx-auto transition-all"
+            :class="[
+              state.sendingRequest || state.requestSent ? 'opacity-100' : 'opacity-0 w-0 h-0',
+              state.sendingRequest ? 'translate-y-[0.1rem]' : undefined,
+              state.requestSent ? 'pl-[5%]' : undefined
+            ]"
+          />
+          <span v-if="!(state.sendingRequest || state.requestSent)" class="w-full mx-auto"
+            >Save</span
+          ></SpotifyButton
+        >
+      </div>
     </form>
   </BaseCard>
 </template>
