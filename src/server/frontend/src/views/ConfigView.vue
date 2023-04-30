@@ -91,7 +91,7 @@ const onSubmit = async (e: Event) => {
               copy of your "Liked Songs" list</InfoPopup
             >
           </legend>
-          <div>
+          <div class="flex">
             <input
               v-model="formDataState.defaultPlaylistSyncInterval"
               type="number"
@@ -101,12 +101,11 @@ const onSubmit = async (e: Event) => {
               name="defaultPlaylistSyncInterval"
               class="w-12 text-center pl-4"
             />
-            <label for="defaultPlaylistSyncInterval" class="flex gap-1"
-              >Time between syncs (minutes)<InfoPopup color="light"
-                >We're not notified when you add or remove your liked songs, so we have to rebuild
-                the cloned playlist once every X minutes. With this setting you can change that
-                X.</InfoPopup
-              ></label
+            <label for="defaultPlaylistSyncInterval">Time between syncs (minutes)</label>
+            <InfoPopup color="light" class="ml-1"
+              >We're not notified when you add or remove your liked songs, so we have to rebuild the
+              cloned playlist once every X minutes. With this setting you can change that
+              X.</InfoPopup
             >
           </div>
         </fieldset>
