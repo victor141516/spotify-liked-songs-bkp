@@ -2,6 +2,7 @@
 import loadingImage from '@/assets/loading.svg?url'
 import tickImage from '@/assets/tick.svg?url'
 import BaseCard from '@/components/BaseCard.vue'
+import InfoPopup from '@/components/InfoPopup.vue'
 import SpotifyButton from '@/components/SpotifyButton.vue'
 import { onMounted, reactive } from 'vue'
 
@@ -75,6 +76,8 @@ const onSubmit = async (e: Event) => {
     state.requestSent = false
   }, 1000)
 }
+
+// TODO: add info about the config
 </script>
 
 <template>
@@ -82,7 +85,12 @@ const onSubmit = async (e: Event) => {
     <form @submit.prevent="onSubmit" class="flex flex-col gap-4 items-center">
       <div class="flex flex-col gap-2">
         <fieldset>
-          <legend class="text-xl mb-1">Sync</legend>
+          <legend class="text-xl mb-1 flex gap-1">
+            Sync<InfoPopup color="light"
+              >Settings about the default playlist we're creating for you, that will contain all a
+              copy of your "Liked Songs" list</InfoPopup
+            >
+          </legend>
           <div>
             <input
               v-model="formDataState.defaultPlaylistSyncInterval"
@@ -93,11 +101,22 @@ const onSubmit = async (e: Event) => {
               name="defaultPlaylistSyncInterval"
               class="w-12 text-center pl-4"
             />
-            <label for="defaultPlaylistSyncInterval">Time between syncs (minutes)</label>
+            <label for="defaultPlaylistSyncInterval" class="flex gap-1"
+              >Time between syncs (minutes)<InfoPopup color="light"
+                >We're not notified when you add or remove your liked songs, so we have to rebuild
+                the cloned playlist once every X minutes. With this setting you can change that
+                X.</InfoPopup
+              ></label
+            >
           </div>
         </fieldset>
         <fieldset class="mt-4">
-          <legend class="text-xl mb-1">Snapshots</legend>
+          <legend class="text-xl mb-1 flex gap-1">
+            Snapshots<InfoPopup color="light"
+              >This feature can copy your liked songs list to a new playlist and it'll remain as
+              is.</InfoPopup
+            >
+          </legend>
           <div>
             <input
               v-model="formDataState.snapshotIntervalEnabled"
@@ -108,7 +127,7 @@ const onSubmit = async (e: Event) => {
             />
             <label for="snapshotIntervalEnabled">Enable snapshots</label>
           </div>
-          <div>
+          <div class="flex">
             <input
               :disabled="!formDataState.snapshotIntervalEnabled"
               v-model="formDataState.snapshotInterval"
@@ -121,6 +140,12 @@ const onSubmit = async (e: Event) => {
             />
             <label for="snapshotInterval" class="peer-disabled:opacity-50"
               >Time between snapshots (days)</label
+            >
+            <InfoPopup color="light" class="ml-1"
+              >By default we're creating those snapshots every day. We're also removing snapshots
+              older than the 5th (this behavior can't be changed for now). e.g. if you change this
+              setting to 30, you'll end up having 5 playlists, each having your liked songs lists as
+              it was one month ago, two months ago, etc.</InfoPopup
             >
           </div>
         </fieldset>
