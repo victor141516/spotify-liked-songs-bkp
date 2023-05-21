@@ -3,7 +3,7 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
 import { onMounted, reactive, ref, watchEffect } from 'vue'
 
 const RESULT_MESSAGES = {
-  credentials_revoked: 'You thought you could leve without saying goodbye?',
+  credentials_revoked: 'You thought you could leave without saying goodbye?',
   credentials_saved:
     'Now your liked songs playlist will be kept in sync with your new playlist 🎉. It might take a few minutes for the first sync to happen. You can close this window now.'
 } as const
@@ -25,7 +25,8 @@ onMounted(() => {
 const state = reactive({
   errorMessage: '',
   resultMessage: '',
-  showGoodbye: false
+  showGoodbye: false,
+  result: null as keyof typeof RESULT_MESSAGES | null
 })
 
 watchEffect(() => {
@@ -34,6 +35,7 @@ watchEffect(() => {
 
   if (ok) {
     const result = params.value.get('result')
+    state.result = result
     state.resultMessage = RESULT_MESSAGES[result!] ?? result!
     if (result === 'credentials_revoked') {
       state.showGoodbye = true
@@ -49,7 +51,7 @@ watchEffect(() => {
   <div v-if="state.resultMessage" class="text-center flex flex-col items-center gap-5">
     <h1 id="header" class="text-center">Done!</h1>
     <p>{{ state.resultMessage }}</p>
-    <RouterLink :to="{ name: 'config' }">
+    <RouterLink v-if="state.result === 'credentials_saved'" :to="{ name: 'config' }">
       <SpotifyButton type="button">Go to Settings</SpotifyButton>
     </RouterLink>
     <video
@@ -60,6 +62,7 @@ watchEffect(() => {
       preload="auto"
       playsinline="true"
       src="/goodbye.mp4"
+      class="w-[clamp(20vw,_40rem,_100vw)] aspect-[32/13] object-cover"
     />
   </div>
   <div v-if="state.errorMessage" class="text-center flex flex-col items-center gap-5">

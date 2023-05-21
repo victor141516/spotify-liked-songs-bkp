@@ -5,8 +5,17 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
 <template>
   <div class="flex flex-col items-center gap-12">
     <div class="flex flex-col gap-8 items-center">
-      <h1 class="text-center">Make Spotify Liked playlist shareable</h1>
-      <div class="flex gap-5 items-center">
+      <div class="flex gap-4 items-center">
+        <h1 class="text-center flex-[3]">Make Spotify Liked playlist shareable</h1>
+        <div class="md:hidden flex-[2]">
+          <img
+            src="../assets/playlists.png"
+            alt="Spotify playlists"
+            class="aspect-[2] object-cover object-top"
+          />
+        </div>
+      </div>
+      <div class="flex flex-col md:flex-row gap-5 items-center">
         <div id="explanation-wrapper">
           <p
             class="py-2 px-5 first:pt-4 last:pb-4 border-b last:border-none border-solid border-dark"
@@ -32,7 +41,7 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
             last 5 days
           </p>
         </div>
-        <img src="../assets/playlists.png" alt="Spotify playlists" class="h-64" />
+        <img src="../assets/playlists.png" alt="Spotify playlists" class="hidden md:block w-52" />
       </div>
       <SpotifyButton type="link" href="/auth/login">Authorize with Spotify</SpotifyButton>
     </div>
