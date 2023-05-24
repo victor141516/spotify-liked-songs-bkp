@@ -4,7 +4,12 @@ import { useParallax } from '@vueuse/core'
 import { computed, reactive, ref, type CSSProperties } from 'vue'
 
 const parallaxTarget = ref<HTMLElement | null>(null)
-const parallax = reactive(useParallax(globalThis.document?.body))
+const parallax = reactive(
+  useParallax(globalThis.document?.body, {
+    deviceOrientationTiltAdjust: (i) => i * 2,
+    deviceOrientationRollAdjust: (i) => i * 2
+  })
+)
 const layerBase: CSSProperties = {
   transition: '.3s ease-out all'
 }
