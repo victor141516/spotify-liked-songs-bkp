@@ -13,6 +13,14 @@ export class RateLimitExceededSpotifyError extends SpotifyError {
   }
 }
 
+export class DebuggingError extends SpotifyError {
+  constructor(public data: unknown) {
+    super(`Debugging data: ${JSON.stringify(data)}`)
+  }
+}
+
+export class May25DebuggingError extends DebuggingError {}
+
 const rateLimitHandledFetch = async (url: string, options: RequestInit = {}) => {
   const response = await fetch(url, options)
   if (response.status === 429) {
@@ -185,7 +193,12 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
       },
     })
       .then((res) => res.json() as Promise<{ next: string; items: { track: { id: string } }[] }>)
-      .then((res) => ({ next: res.next, items: res.items.map((item) => item.track.id) }))
+      .then((res) => {
+        if (!res.items) {
+          throw new May25DebuggingError(res)
+        }
+        return { next: res.next, items: res.items.map((item) => item.track.id) }
+      })
     allItems.push(...items)
     nextUrl = next
   }
