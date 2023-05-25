@@ -195,7 +195,7 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
       .then((res) => res.json() as Promise<{ next: string; items: { track: { id: string } }[] }>)
       .then((res) => {
         if (!res.items) {
-          throw new May25DebuggingError(res)
+          throw new May25DebuggingError({ nextUrl, res })
         }
         return { next: res.next, items: res.items.map((item) => item.track.id) }
       })
