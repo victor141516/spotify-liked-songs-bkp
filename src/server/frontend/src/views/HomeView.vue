@@ -9,6 +9,8 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
         <h1 class="text-center flex-[3]">Make Spotify Liked playlist shareable</h1>
         <div class="md:hidden flex-[2]">
           <img
+            height="88"
+            width="176"
             src="../assets/playlists.png"
             alt="Spotify playlists"
             class="aspect-[2] object-cover object-top"
@@ -24,8 +26,10 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
             <a
               target="_blank"
               href="https://community.spotify.com/t5/Live-Ideas/Make-quot-Liked-Songs-quot-playlist-shareable/idi-p/4872982"
-              >this annoying issue</a
+              class="bg-primary text-white px-1 py-0.5 rounded-md no-underline"
             >
+              this annoying issue
+            </a>
             that doesn't allow you to share your "Liked Songs" list
           </p>
           <p
@@ -41,7 +45,13 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
             last 5 days
           </p>
         </div>
-        <img src="../assets/playlists.png" alt="Spotify playlists" class="hidden md:block w-52" />
+        <img
+          height="241"
+          width="208"
+          src="../assets/playlists.png"
+          alt="Spotify playlists"
+          class="hidden md:block w-52"
+        />
       </div>
       <SpotifyButton type="link" href="/auth/login">Authorize with Spotify</SpotifyButton>
     </div>

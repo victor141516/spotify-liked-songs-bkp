@@ -1,0 +1,10 @@
+<svg viewBox="0 0 2 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="myGradient" gradientTransform="rotate(-30)">
+      <stop offset="0%" stop-color="#ff6851"></stop>
+      <stop offset="80%" stop-color="#fe935b"></stop>
+    </linearGradient>
+  </defs>
+  <circle cx="1" cy="1" r="1" fill="url('#myGradient')"></circle>
+</svg>
+
