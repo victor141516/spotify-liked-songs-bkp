@@ -15,6 +15,7 @@ export const DATABASE_URI =
 export const MODE = (process.argv[2] || process.env.MODE || 'server') as 'server' | 'worker'
 export const RUN_INTERVAL = Number.parseInt(process.env.RUN_INTERVAL || (1000 * 60 * 60).toString())
 export const SESSION_SECRET = process.env.SESSION_SECRET || 'a-very-secret-secret'
+export const SENTRY_DSN = process.env.SENTRY_DSN
 
 if (!CLIENT_ID) {
   console.warn('CLIENT_ID not set')
