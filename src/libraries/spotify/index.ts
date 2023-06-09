@@ -1,4 +1,5 @@
 import memoize from 'memoizee'
+import { SpotifyApiCapturedError, captureException } from '../errors'
 
 const PLAYLIST_NAME = 'Liked Songs'
 
@@ -24,7 +25,7 @@ export class May25DebuggingError extends DebuggingError {}
 const rateLimitHandledFetch = async (url: string, options: RequestInit = {}) => {
   const response = await fetch(url, options)
   if (!response.ok) {
-    // TODO: maybe send some stuff to sentry here
+    captureException(new SpotifyApiCapturedError(`Error fetching ${url}: ${response.status} ${response.statusText}`))
   }
   if (response.status === 429) {
     const retryAfter = Number(response.headers.get('Retry-After'))
