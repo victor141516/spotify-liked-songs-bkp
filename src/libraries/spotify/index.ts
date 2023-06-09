@@ -25,7 +25,11 @@ export class May25DebuggingError extends DebuggingError {}
 const rateLimitHandledFetch = async (url: string, options: RequestInit = {}) => {
   const response = await fetch(url, options)
   if (!response.ok) {
-    captureException(new SpotifyApiCapturedError(`Error fetching ${url}: ${response.status} ${response.statusText}`))
+    captureException(
+      new SpotifyApiCapturedError(
+        `Error fetching ${url}: ${response.status} ${response.statusText} ${await response.text()}`,
+      ),
+    )
   }
   if (response.status === 429) {
     const retryAfter = Number(response.headers.get('Retry-After'))
