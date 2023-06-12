@@ -1,5 +1,6 @@
 import memoize from 'memoizee'
 import {
+  SpotifyApiAccessTokenExpiredError,
   SpotifyApiBadGatewayError,
   SpotifyApiCapturedError,
   SpotifyApiInternalServerErrorError,
@@ -30,17 +31,17 @@ export class DebuggingError extends SpotifyError {
 export class May25DebuggingError extends DebuggingError {}
 
 async function handleNotOkResponse(response: Response, url: string) {
-  let TheError: typeof SpotifyApiCapturedError
+  let TheError = SpotifyApiCapturedError
   if (response.status === 429) {
     TheError = SpotifyApiTooManyRequestsError
   } else if (response.status === 400 && (await response.json()).error === 'invalid_grant') {
     TheError = SpotifyApiRefreshTokenRevokedError
+  } else if (response.status === 401) {
+    TheError = SpotifyApiAccessTokenExpiredError
   } else if (response.status === 500) {
     TheError = SpotifyApiInternalServerErrorError
   } else if (response.status === 502) {
     TheError = SpotifyApiBadGatewayError
-  } else {
-    TheError = SpotifyApiCapturedError
   }
   captureException(new TheError(TheError.name), {
     url,
