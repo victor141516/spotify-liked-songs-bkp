@@ -42,7 +42,7 @@ async function handleNotOkResponse(response: Response, url: string) {
   } else {
     TheError = SpotifyApiCapturedError
   }
-  captureException(new TheError(), {
+  captureException(new TheError(TheError.name), {
     url,
     status: response.status,
     statusText: response.statusText,
