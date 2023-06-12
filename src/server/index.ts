@@ -4,10 +4,11 @@ import session from 'express-session'
 import { nanoid } from 'nanoid'
 import { get as getUser, remove as removeUser, saveConfig, save as saveUser } from '../libraries/credentials'
 import { getClient } from '../libraries/database'
+import { addBreadcrumb } from '../libraries/errors'
 import {
   CouldNotUseCodeToGetAccessTokenSpotifyError,
   authCodeToAccessToken,
-  getUser as getSpotifuUser,
+  getUser as getSpotifyUser,
 } from '../libraries/spotify'
 
 const SPOTIFY_API_SCOPES = 'user-library-read playlist-modify-public'
@@ -40,6 +41,8 @@ export const start = (
   const getSession = <T>(req: Request) => req.session as T | Record<string, never>
 
   app.get('/auth/login', async (req, res) => {
+    const state = nanoid(16)
+    addBreadcrumb({ category: 'endpoint_hit', message: 'Login started', data: { state } })
     return res.redirect(
       'https://accounts.spotify.com/authorize?' +
         new URLSearchParams({
@@ -47,12 +50,14 @@ export const start = (
           client_id: clientId,
           scope: SPOTIFY_API_SCOPES,
           redirect_uri: spotifyApiAuthRedirectUri,
-          state: nanoid(16),
+          state,
         }),
     )
   })
 
   app.get('/auth/revoke', async (req, res) => {
+    const state = nanoid(16)
+    addBreadcrumb({ category: 'endpoint_hit', message: 'Revoke started', data: { state } })
     return res.redirect(
       'https://accounts.spotify.com/authorize?' +
         new URLSearchParams({
@@ -60,15 +65,18 @@ export const start = (
           client_id: clientId,
           scope: '',
           redirect_uri: spotifyApiRevokeRedirectUri,
-          state: nanoid(16),
+          state,
         }),
     )
   })
 
   app.get('/auth/callback', async (req, res) => {
+    addBreadcrumb({ category: 'endpoint_hit', message: 'Spotify auth callback' })
     const code = (req.query.code as undefined | string) || null
     const state = (req.query.state as undefined | string) || null
     const revoke = ((req.query.revoke as undefined | string) || 'false') === 'true'
+
+    addBreadcrumb({ category: 'auth_callback', message: 'URL params', data: req.query })
 
     if (state === null)
       return res.redirect(appRedirectUrl + '?' + new URLSearchParams({ ok: 'false', error: 'no_state' }))
@@ -107,7 +115,7 @@ export const start = (
     let userId: string
 
     try {
-      const userResponse = await getSpotifuUser(response.access_token, response.refresh_token, clientId, clientSecret)
+      const userResponse = await getSpotifyUser(response.access_token, response.refresh_token, clientId, clientSecret)
       userId = userResponse.userId
     } catch (error) {
       console.warn(error)
@@ -143,12 +151,14 @@ export const start = (
   })
 
   app.get('/api/config', async (req, res) => {
+    addBreadcrumb({ category: 'endpoint_hit', message: '[GET] API config' })
     const session = getSession<{ userId: string }>(req)
     const { config } = await getUser({ userId: session.userId })
     return res.send(config)
   })
 
   app.post('/api/config', async (req, res) => {
+    addBreadcrumb({ category: 'endpoint_hit', message: '[POST] API config' })
     const session = getSession<{ userId: string }>(req)
     const postBody = req.body as {
       snapshotIntervalEnabled: boolean

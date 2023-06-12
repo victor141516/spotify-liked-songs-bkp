@@ -1,5 +1,12 @@
 import memoize from 'memoizee'
-import { SpotifyApiCapturedError, captureException } from '../errors'
+import {
+  SpotifyApiBadGatewayError,
+  SpotifyApiCapturedError,
+  SpotifyApiInternalServerErrorError,
+  SpotifyApiRefreshTokenRevokedError,
+  SpotifyApiTooManyRequestsError,
+  captureException,
+} from '../errors'
 
 const PLAYLIST_NAME = 'Liked Songs'
 
@@ -22,14 +29,31 @@ export class DebuggingError extends SpotifyError {
 
 export class May25DebuggingError extends DebuggingError {}
 
+async function handleNotOkResponse(response: Response, url: string) {
+  let TheError: typeof SpotifyApiCapturedError
+  if (response.status === 429) {
+    TheError = SpotifyApiTooManyRequestsError
+  } else if (response.status === 400 && (await response.json()).error === 'invalid_grant') {
+    TheError = SpotifyApiRefreshTokenRevokedError
+  } else if (response.status === 500) {
+    TheError = SpotifyApiInternalServerErrorError
+  } else if (response.status === 502) {
+    TheError = SpotifyApiBadGatewayError
+  } else {
+    TheError = SpotifyApiCapturedError
+  }
+  captureException(new TheError(), {
+    url,
+    status: response.status,
+    statusText: response.statusText,
+    body: await response.text(),
+  })
+}
+
 const rateLimitHandledFetch = async (url: string, options: RequestInit = {}) => {
   const response = await fetch(url, options)
   if (!response.ok) {
-    captureException(
-      new SpotifyApiCapturedError(
-        `Error fetching ${url}: ${response.status} ${response.statusText} ${await response.text()}`,
-      ),
-    )
+    await handleNotOkResponse(response, url)
   }
   if (response.status === 429) {
     const retryAfter = Number(response.headers.get('Retry-After'))

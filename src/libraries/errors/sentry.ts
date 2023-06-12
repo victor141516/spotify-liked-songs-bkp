@@ -8,18 +8,23 @@ export const init = ({ dsn }: { dsn: string }) => {
   initialized = true
 }
 
-export const captureException = (error: Error) => {
+export const captureException = (error: Error, context?: Record<string, unknown>) => {
   if (!initialized) {
-    console.warn('Sentry not initialized')
-    return
+    return console.warn('Sentry not initialized')
   }
-  Sentry.captureException(error)
+  Sentry.captureException(error, context)
 }
 
 export const captureMessage = (message: string) => {
   if (!initialized) {
-    console.warn('Sentry not initialized')
-    return
+    return console.warn('Sentry not initialized')
   }
   Sentry.captureMessage(message)
+}
+
+export const addBreadcrumb = (breadcrumb: Sentry.Breadcrumb) => {
+  if (!initialized) {
+    return console.warn('Sentry not initialized')
+  }
+  Sentry.addBreadcrumb(breadcrumb)
 }
