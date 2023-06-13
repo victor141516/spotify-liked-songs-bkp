@@ -51,9 +51,13 @@ async function handleNotOkResponse(response: Response, url: string) {
   })
 }
 
-const rateLimitHandledFetch = async (url: string, options: RequestInit = {}) => {
+const rateLimitHandledFetch = async (
+  url: string,
+  options: RequestInit = {},
+  { captureErrors = true }: { captureErrors?: boolean } = {},
+) => {
   const response = await fetch(url, options)
-  if (!response.ok) {
+  if (captureErrors && !response.ok) {
     await handleNotOkResponse(response, url)
   }
   if (response.status === 429) {
@@ -71,7 +75,7 @@ async function _getUser(
 ): Promise<{ userId: string; accessToken: string }> {
   const meUrl = 'https://api.spotify.com/v1/me'
   const headers = { Authorization: `Bearer ${accessToken}` }
-  const response = await rateLimitHandledFetch(meUrl, { headers })
+  const response = await rateLimitHandledFetch(meUrl, { headers }, { captureErrors: false })
   if (response.ok) {
     console.debug('  - Access token works! no need to refresh')
     const { id: userId } = (await response.json()) as { id: string }
