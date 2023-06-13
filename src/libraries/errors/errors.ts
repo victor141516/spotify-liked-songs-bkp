@@ -10,3 +10,5 @@ export class SpotifyApiAccessTokenExpiredError extends SpotifyApiCapturedError {
 export class SpotifyApiInternalServerErrorError extends SpotifyApiCapturedError {}
 // status: 502
 export class SpotifyApiBadGatewayError extends SpotifyApiCapturedError {}
+// status: 504
+export class SpotifyApiGatewayTimeoutError extends SpotifyApiCapturedError {}
