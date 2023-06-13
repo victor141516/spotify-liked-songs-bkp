@@ -8,11 +8,11 @@ export const init = ({ dsn }: { dsn: string }) => {
   initialized = true
 }
 
-export const captureException = (error: Error, context?: Record<string, unknown>) => {
+export const captureException = (error: Error, extra?: Record<string, unknown>) => {
   if (!initialized) {
     return console.warn('Sentry not initialized')
   }
-  Sentry.captureException(error, context)
+  Sentry.captureException(error, { extra })
 }
 
 export const captureMessage = (message: string) => {
