@@ -6,6 +6,7 @@ import {
   SpotifyApiGatewayTimeoutError,
   SpotifyApiInternalServerErrorError,
   SpotifyApiRefreshTokenRevokedError,
+  SpotifyApiServiceUnavailableError,
   SpotifyApiTooManyRequestsError,
   captureException,
 } from '../errors'
@@ -43,6 +44,8 @@ async function handleNotOkResponse(response: Response, url: string) {
     TheError = SpotifyApiInternalServerErrorError
   } else if (response.status === 502) {
     TheError = SpotifyApiBadGatewayError
+  } else if (response.status === 503) {
+    TheError = SpotifyApiServiceUnavailableError
   } else if (response.status === 504) {
     TheError = SpotifyApiGatewayTimeoutError
   }
