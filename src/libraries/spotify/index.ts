@@ -8,6 +8,7 @@ import {
   SpotifyApiRefreshTokenRevokedError,
   SpotifyApiServiceUnavailableError,
   SpotifyApiTooManyRequestsError,
+  addBreadcrumb,
   captureException,
 } from '../errors'
 
@@ -85,6 +86,7 @@ async function _getUser(
   if (response.ok) {
     console.debug('  - Access token works! no need to refresh')
     const { id: userId } = (await response.json()) as { id: string }
+    addBreadcrumb({ message: 'Got user ID', data: { userId } })
     return { userId, accessToken }
   } else if (response.status === 401 && refreshToken) {
     console.debug('  - Refreshing access token...')
