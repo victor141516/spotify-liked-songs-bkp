@@ -27,7 +27,7 @@ const main = async () => {
 
   if (MODE === 'worker') {
     worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)
-    stopHandlers.push(worker.startSnapshotWorker(RUN_INTERVAL))
+    // stopHandlers.push(worker.startSnapshotWorker(RUN_INTERVAL))
     stopHandlers.push(worker.startDefaultPlaylistSyncWorker(RUN_INTERVAL))
   } else {
     await server.start(
