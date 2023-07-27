@@ -14,6 +14,7 @@ import {
 import { getNewRuns, saveRun } from './database'
 
 export type RunType = 'snapshot' | 'defaultPlaylistSync'
+export type ErrorRun = 'error'
 
 const spotifyApiData = {
   clientId: null as null | string,
@@ -107,6 +108,7 @@ async function* _do(
     } catch (error) {
       if (error instanceof CouldNotAuthenticateSpotifyError) {
         console.error('!!! Could not authenticate Spotify', error)
+        saveRun(credentials.id, 'error')
         // console.log('- Deleting credentials. User ID:', credentials.id)
         // remove({ id: credentials.id })
       } else {
