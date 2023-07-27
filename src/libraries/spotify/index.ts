@@ -1,4 +1,3 @@
-import { url } from 'inspector'
 import memoize from 'memoizee'
 import {
   SpotifyApiAccessTokenExpiredError,
@@ -138,7 +137,7 @@ async function _getUser(
         body = await refreshResponse.text()
       } catch (e) {
         console.warn(`!!!!!!! Maybe error. Could not parse not OK response body while refreshing access token
-        URL: ${url},
+        URL: ${refreshUrl},
         Status: ${response.status},
         StatusText: ${response.statusText}`)
       }
@@ -150,7 +149,7 @@ async function _getUser(
       body = await response.text()
     } catch (e) {
       console.warn(`!!!!!!! Maybe error. Could not parse not OK response body while getting user info (/me)
-        URL: ${url},
+        URL: ${meUrl},
         Status: ${response.status},
         StatusText: ${response.statusText}`)
     }
