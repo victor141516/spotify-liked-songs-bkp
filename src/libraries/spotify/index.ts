@@ -18,6 +18,7 @@ export class SpotifyError {
   constructor(public message: string) {}
 }
 export class FetchExceptionSpotifyError extends SpotifyError {}
+export class FetchGetTextExceptionSpotifyError extends SpotifyError {}
 export class CouldNotAuthenticateSpotifyError extends SpotifyError {}
 export class CouldNotUseCodeToGetAccessTokenSpotifyError extends SpotifyError {}
 export class RateLimitExceededSpotifyError extends SpotifyError {
@@ -51,11 +52,22 @@ async function handleNotOkResponse(response: Response, url: string) {
   } else if (response.status === 504) {
     TheError = SpotifyApiGatewayTimeoutError
   }
+  let body = ''
+  try {
+    body = await response.text()
+  } catch (e) {
+    console.warn(`!!!!!!! Maybe error. Could not parse not OK response body
+    Error: ${TheError.name}
+    URL: ${url},
+    Status: ${response.status},
+    StatusText: ${response.statusText},
+    `)
+  }
   captureException(new TheError(TheError.name), {
     url,
     status: response.status,
     statusText: response.statusText,
-    body: await response.text(),
+    body,
   })
 }
 
