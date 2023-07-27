@@ -17,6 +17,7 @@ const PLAYLIST_NAME = 'Liked Songs'
 export class SpotifyError {
   constructor(public message: string) {}
 }
+export class FetchExceptionSpotifyError extends SpotifyError {}
 export class CouldNotAuthenticateSpotifyError extends SpotifyError {}
 export class CouldNotUseCodeToGetAccessTokenSpotifyError extends SpotifyError {}
 export class RateLimitExceededSpotifyError extends SpotifyError {
@@ -63,7 +64,16 @@ const rateLimitHandledFetch = async (
   options: RequestInit = {},
   { expectedStatuses = [200, 201] }: { expectedStatuses?: number[] } = {},
 ) => {
-  const response = await fetch(url, options)
+  let response: Response
+  try {
+    response = await fetch(url, options)
+  } catch (e) {
+    throw new FetchExceptionSpotifyError(
+      `URL: ${url}
+      Option: ${JSON.stringify(options)}
+      Error: ${e?.toString() || 'Error fetching'}`,
+    )
+  }
   if (!expectedStatuses.includes(response.status)) {
     await handleNotOkResponse(response, url)
   }
