@@ -1,3 +1,4 @@
+import { url } from 'inspector'
 import memoize from 'memoizee'
 import {
   SpotifyApiAccessTokenExpiredError,
@@ -60,7 +61,7 @@ async function handleNotOkResponse(response: Response, url: string) {
     Error: ${TheError.name}
     URL: ${url},
     Status: ${response.status},
-    StatusText: ${response.statusText},
+    StatusText: ${response.statusText}
     `)
   }
   captureException(new TheError(TheError.name), {
@@ -132,13 +133,31 @@ async function _getUser(
       console.debug('  - Checking if access token works...')
       return getUser(newAccessToken, refreshToken, clientId, clientSecret)
     } else {
-      console.error('Error refreshing:', refreshResponse.status, await refreshResponse.text())
+      let body = ''
+      try {
+        body = await refreshResponse.text()
+      } catch (e) {
+        console.warn(`!!!!!!! Maybe error. Could not parse not OK response body while refreshing access token
+        URL: ${url},
+        Status: ${response.status},
+        StatusText: ${response.statusText}`)
+      }
+      console.error('Error refreshing:', refreshResponse.status, body)
     }
   } else {
+    let body = ''
+    try {
+      body = await response.text()
+    } catch (e) {
+      console.warn(`!!!!!!! Maybe error. Could not parse not OK response body while getting user info (/me)
+        URL: ${url},
+        Status: ${response.status},
+        StatusText: ${response.statusText}`)
+    }
     console.error(
       '  - Unknown error getting user info:',
       response.status,
-      await response.text(),
+      body,
       'retry-after:',
       response.headers.get('retry-after'),
     )
