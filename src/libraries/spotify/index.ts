@@ -87,7 +87,7 @@ const rateLimitHandledFetch = async (
     )
   }
   if (!expectedStatuses.includes(response.status)) {
-    await handleNotOkResponse(response, url)
+    await handleNotOkResponse(response.clone(), url)
   }
   if (response.status === 429) {
     const retryAfter = Number(response.headers.get('Retry-After'))
