@@ -3,6 +3,7 @@ import { save } from '../libraries/credentials'
 import { isInstance, sleep } from '../libraries/misc'
 import {
   CouldNotAuthenticateSpotifyError,
+  May25DebuggingError,
   RateLimitExceededSpotifyError,
   addTracksToPlaylist,
   createSnapshotPlaylist,
@@ -106,8 +107,8 @@ async function* _do(
       )
       saveRun(credentials.id, runType)
     } catch (error) {
-      if (error instanceof CouldNotAuthenticateSpotifyError) {
-        console.error('!!! Could not authenticate Spotify', error)
+      if (error instanceof CouldNotAuthenticateSpotifyError || error instanceof May25DebuggingError) {
+        console.error('!!! Error on the run:', error)
         saveRun(credentials.id, 'error')
         // console.log('- Deleting credentials. User ID:', credentials.id)
         // remove({ id: credentials.id })
