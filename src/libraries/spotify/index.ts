@@ -35,7 +35,7 @@ export class DebuggingError extends SpotifyError {
 
 export class May25DebuggingError extends DebuggingError {}
 
-async function handleNotOkResponse(response: Response, url: string) {
+async function handleNotOkResponse(response: Response, url: string): Promise<never> {
   let TheError = SpotifyApiCapturedError
   if (response.status === 429) {
     TheError = SpotifyApiTooManyRequestsError
@@ -63,12 +63,14 @@ async function handleNotOkResponse(response: Response, url: string) {
     StatusText: ${response.statusText}
     `)
   }
-  captureException(new TheError(TheError.name), {
+  const error = new TheError(TheError.name)
+  captureException(error, {
     url,
     status: response.status,
     statusText: response.statusText,
     body,
   })
+  throw error
 }
 
 const rateLimitHandledFetch = async (
