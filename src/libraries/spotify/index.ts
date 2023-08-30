@@ -33,7 +33,7 @@ export class DebuggingError extends SpotifyError {
   }
 }
 
-export class May25DebuggingError extends DebuggingError {}
+export class PlaylistWithoutItemsSpotifyError extends DebuggingError {}
 
 async function handleNotOkResponse(response: Response, url: string): Promise<never> {
   let TheError = SpotifyApiCapturedError
@@ -168,30 +168,24 @@ async function _getUser(
 }
 
 async function _getLikedSongs(accessToken: string): Promise<string[]> {
-  let nextUrl = 'https://api.spotify.com/v1/me/tracks'
+  let nextUrl = 'https://api.spotify.com/v1/me/tracks?limit=50'
   const allSongs: string[] = []
   let count = 0
   while (nextUrl) {
-    console.debug('  - Getting liked songs... ', ++count)
+    console.debug('  - Getting next liked songs page...')
     const likedSongsResponse = await rateLimitHandledFetch(nextUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
-    }).then((res) => res.json() as Promise<{ next: string; items: { track: { id: string } }[] }>)
+    }).then((res) => res.json() as Promise<{ next: string; items: { track: { id: string; name: string } }[] }>)
+    count += likedSongsResponse.items.length
+    console.debug('  - Got', likedSongsResponse.items.length, 'new songs. Total:', count)
     nextUrl = likedSongsResponse.next
     const likedSongs = likedSongsResponse.items.map((item) => item.track.id)
     allSongs.push(...likedSongs)
   }
   console.debug('  - Got liked songs!')
   return allSongs
-}
-
-export function generatePlaylistName(daysFromNow: number) {
-  const now = new Date()
-  const date = new Date(now.getTime() - daysFromNow * 24 * 60 * 60 * 1000)
-  return `${PLAYLIST_NAME} (${date.toLocaleString('default', {
-    month: 'short',
-  })} ${date.getDate()}, ${date.getFullYear()})`
 }
 
 export async function createPlaylist(accessToken: string, name: string) {
@@ -251,10 +245,10 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
   console.debug('  - Got default playlist!')
 
   const allItems: string[] = []
-  let nextUrl = `https://api.spotify.com/v1/playlists/${defaultPlaylist}/tracks`
+  let nextUrl = `https://api.spotify.com/v1/playlists/${defaultPlaylist}/tracks?limit=50`
   let count = 0
   while (nextUrl) {
-    console.debug('  - Getting default playlist tracks... ', ++count)
+    console.debug('  - Getting default playlist tracks...')
     const { next, items } = await rateLimitHandledFetch(nextUrl, {
       headers: {
         Authorization: 'Bearer ' + accessToken,
@@ -263,10 +257,12 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
       .then((res) => res.json() as Promise<{ next: string; items: { track: { id: string } }[] }>)
       .then((res) => {
         if (!res.items) {
-          throw new May25DebuggingError({ nextUrl, res })
+          throw new PlaylistWithoutItemsSpotifyError({ nextUrl, res })
         }
         return { next: res.next, items: res.items.map((item) => item.track.id) }
       })
+    count += items.length
+    console.debug('  - Got', items.length, 'new songs. Total:', count)
     allItems.push(...items)
     nextUrl = next
   }
