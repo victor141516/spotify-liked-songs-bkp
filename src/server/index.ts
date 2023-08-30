@@ -161,8 +161,7 @@ export const start = (
     addBreadcrumb({ category: 'endpoint_hit', message: '[POST] API config' })
     const session = getSession<{ userId: string }>(req)
     const postBody = req.body as {
-      snapshotIntervalEnabled: boolean
-      snapshotInterval: number
+      defaultPlaylistSyncInterval: number
     }
     try {
       await saveConfig(postBody, session.userId)

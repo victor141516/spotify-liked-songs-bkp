@@ -22,12 +22,15 @@ const main = async () => {
   SENTRY_DSN && initErrorHandling({ dsn: SENTRY_DSN })
   db.setUri(DATABASE_URI)
   await db.connect()
-  stopHandlers.push(() => db.getClient().end())
-  stopHandlers.push(() => db.disconnect())
+  stopHandlers.push(() =>
+    db
+      .getClient()
+      .end()
+      .then(() => db.disconnect()),
+  )
 
   if (MODE === 'worker') {
     worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)
-    // stopHandlers.push(worker.startSnapshotWorker(RUN_INTERVAL))
     stopHandlers.push(worker.startDefaultPlaylistSyncWorker(RUN_INTERVAL))
   } else {
     await server.start(

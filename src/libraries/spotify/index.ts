@@ -206,25 +206,6 @@ export async function createPlaylist(accessToken: string, name: string) {
   return id
 }
 
-export async function createSnapshotPlaylist(accessToken: string) {
-  console.debug('  - Creating snapshot playlist name...')
-  const playlistName = generatePlaylistName(0)
-  console.debug('  - Created snapshot playlist name!')
-  console.debug('  - Getting all playlists...')
-  const allPlaylists = await getAllPlaylists(accessToken)
-  console.debug('  - Got all playlists!')
-  console.debug('  - Checking if playlist already exists...')
-  const existingPlaylist = allPlaylists.find((playlist) => playlist.name === playlistName)
-  if (existingPlaylist) {
-    console.debug("  - Playlist already exists! Let's not touch anything...")
-    return null
-  }
-  console.debug('  - Playlist does not exist, creating...')
-  const id = await createPlaylist(accessToken, playlistName)
-  console.debug('  - Created snapshot playlist!')
-  return id
-}
-
 export async function addTracksToPlaylist(accessToken: string, playlistId: string, likedSongs: string[]) {
   const batches: string[][] = []
   for (let i = 0; i < likedSongs.length; i += 100) {
@@ -319,46 +300,6 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
   return addResult
 }
 
-export async function removeOldSnapshots(accessToken: string, itemsToKeep: number) {
-  const work = async () => {
-    console.debug('  - Getting all playlists...')
-    const items = await getAllPlaylists(accessToken)
-    console.debug('  - Got all playlists!')
-    console.debug('  - Filtering playlists...')
-    const snapshotPlaylists = items
-      .map((playlist) => ({
-        id: playlist.id,
-        date: playlist.name.match(`${PLAYLIST_NAME} \\((... [1-3]?[0-9], [0-9]{4})\\)`)?.[1],
-      }))
-      .filter((p) => p.date) as { id: string; date: string }[]
-    const sortedPlaylists = snapshotPlaylists.sort((a, b) => {
-      const aDate = new Date(a.date)
-      const bDate = new Date(b.date)
-      return bDate.getTime() - aDate.getTime()
-    })
-    const playlistsToDelete = sortedPlaylists.slice(itemsToKeep)
-    console.debug('  - Filtered playlists!', playlistsToDelete.length, 'to delete')
-    console.debug('  - Deleting playlists...')
-    const results = await Promise.all(
-      playlistsToDelete.map((playlist) => {
-        return rateLimitHandledFetch(`https://api.spotify.com/v1/playlists/${playlist.id}/followers`, {
-          method: 'DELETE',
-          headers: {
-            Authorization: 'Bearer ' + accessToken,
-          },
-        })
-          .then((r) => r.text())
-          .then((t) => t === '')
-      }),
-    )
-    console.debug('  - Deleted playlists!')
-    return results.every(Boolean)
-  }
-  if (!(await work())) {
-    console.warn('  - Failed to delete some playlists, retrying...')
-    await work()
-  }
-}
 export async function authCodeToAccessToken(code: string, redirectUri: string, clientId: string, clientSecret: string) {
   try {
     return await rateLimitHandledFetch('https://accounts.spotify.com/api/token', {

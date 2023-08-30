@@ -1,12 +1,8 @@
 export interface UserConfig {
-  snapshotInterval: number
-  snapshotIntervalEnabled: boolean
   defaultPlaylistSyncInterval: number
 }
 
 export const DEFAULT_CONFIG: UserConfig = {
-  snapshotInterval: 1, // days
-  snapshotIntervalEnabled: true,
   defaultPlaylistSyncInterval: 240, // minutes
 }
 
@@ -17,9 +13,6 @@ const trimConfig = (config: Record<string, unknown>): Partial<UserConfig> => {
       delete sourceCopy[key]
     }
   })
-  if (sourceCopy.snapshotInterval && typeof sourceCopy.snapshotInterval === 'number') {
-    sourceCopy.snapshotInterval = Math.max(DEFAULT_CONFIG.snapshotInterval, sourceCopy.snapshotInterval)
-  }
   if (sourceCopy.defaultPlaylistSyncInterval && typeof sourceCopy.defaultPlaylistSyncInterval === 'number') {
     sourceCopy.defaultPlaylistSyncInterval = Math.max(
       DEFAULT_CONFIG.defaultPlaylistSyncInterval,

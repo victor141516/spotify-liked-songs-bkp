@@ -3,7 +3,7 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-12">
+  <div class="flex flex-col items-center gap-32">
     <div class="flex flex-col gap-8 items-center">
       <div class="flex gap-4 items-center">
         <h1 class="text-center flex-[3]">Make Spotify Liked playlist shareable</h1>
@@ -27,9 +27,8 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
               target="_blank"
               href="https://community.spotify.com/t5/Live-Ideas/Make-quot-Liked-Songs-quot-playlist-shareable/idi-p/4872982"
               class="bg-primary text-white px-1 py-0.5 rounded-md no-underline"
+              >this annoying issue</a
             >
-              this annoying issue
-            </a>
             that doesn't allow you to share your "Liked Songs" list
           </p>
           <p
@@ -37,12 +36,6 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
           >
             This tool will create a new playlist on your account and will keep that playlist in sync
             with your Liked Songs list (it's not instant)
-          </p>
-          <p
-            class="py-2 px-5 first:pt-4 last:pb-4 border-b last:border-none border-solid border-dark"
-          >
-            Optionally the tool will also add a snapshot of the liked songs list each day, for the
-            last 5 days
           </p>
         </div>
         <img

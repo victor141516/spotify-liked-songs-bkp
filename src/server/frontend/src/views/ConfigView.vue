@@ -7,14 +7,10 @@ import SpotifyButton from '@/components/SpotifyButton.vue'
 import { onMounted, reactive } from 'vue'
 
 interface Data {
-  snapshotIntervalEnabled: boolean
-  snapshotInterval: number
   defaultPlaylistSyncInterval: number
 }
 
 const formDataState = reactive<Data>({
-  snapshotIntervalEnabled: true,
-  snapshotInterval: 1,
   defaultPlaylistSyncInterval: 10
 })
 const state = reactive({
@@ -30,8 +26,6 @@ onMounted(async () => {
     return
   }
   const data = await fetch('/api/config').then((res) => res.json())
-  formDataState.snapshotInterval = data.snapshotInterval
-  formDataState.snapshotIntervalEnabled = data.snapshotIntervalEnabled
   formDataState.defaultPlaylistSyncInterval = data.defaultPlaylistSyncInterval
   state.dataFetched = true
 })
@@ -43,12 +37,7 @@ const onSubmit = async (e: Event) => {
   const formData = new FormData(form)
   const data: any = Object.fromEntries(formData.entries())
   disabledElements.forEach((el) => el.setAttribute('disabled', ''))
-  data.snapshotIntervalEnabled = data.snapshotIntervalEnabled === 'on'
-  try {
-    data.snapshotInterval = Number.parseInt(data.snapshotInterval ?? '1') ?? 1
-  } catch (e) {
-    data.snapshotInterval = 1
-  }
+
   try {
     data.defaultPlaylistSyncInterval =
       Number.parseInt(data.defaultPlaylistSyncInterval ?? '10') ?? 10
@@ -58,7 +47,6 @@ const onSubmit = async (e: Event) => {
 
   state.sendingRequest = true
   if (import.meta.env.DEV) {
-    // alert(`Send config: \n${JSON.stringify(data, null, 2)}`)
     await new Promise((resolve) => setTimeout(resolve, 1000))
   } else {
     const result = await fetch('/api/config', {
@@ -76,8 +64,6 @@ const onSubmit = async (e: Event) => {
     state.requestSent = false
   }, 1000)
 }
-
-// TODO: add info about the config
 </script>
 
 <template>
@@ -99,52 +85,13 @@ const onSubmit = async (e: Event) => {
               step="1"
               id="defaultPlaylistSyncInterval"
               name="defaultPlaylistSyncInterval"
-              class="w-12 text-center pl-4"
+              class="w-12 text-center"
             />
             <label for="defaultPlaylistSyncInterval">Time between syncs (minutes)</label>
             <InfoPopup color="light" class="ml-1"
               >We're not notified when you add or remove your liked songs, so we have to rebuild the
               cloned playlist once every X minutes. With this setting you can change that
               X.</InfoPopup
-            >
-          </div>
-        </fieldset>
-        <fieldset class="mt-4">
-          <legend class="text-xl mb-1 flex gap-1">
-            Snapshots<InfoPopup color="light"
-              >This feature can copy your liked songs list to a new playlist and it'll remain as
-              is.</InfoPopup
-            >
-          </legend>
-          <div>
-            <input
-              v-model="formDataState.snapshotIntervalEnabled"
-              type="checkbox"
-              id="snapshotIntervalEnabled"
-              name="snapshotIntervalEnabled"
-              class="w-12 text-center"
-            />
-            <label for="snapshotIntervalEnabled">Enable snapshots</label>
-          </div>
-          <div class="flex">
-            <input
-              :disabled="!formDataState.snapshotIntervalEnabled"
-              v-model="formDataState.snapshotInterval"
-              type="number"
-              min="1"
-              step="1"
-              id="snapshotInterval"
-              name="snapshotInterval"
-              class="w-12 text-center disabled:opacity-50 peer pl-4"
-            />
-            <label for="snapshotInterval" class="peer-disabled:opacity-50"
-              >Time between snapshots (days)</label
-            >
-            <InfoPopup color="light" class="ml-1"
-              >By default we're creating those snapshots every day. We're also removing snapshots
-              older than the 5th (this behavior can't be changed for now). e.g. if you change this
-              setting to 30, you'll end up having 5 playlists, each having your liked songs lists as
-              it was one month ago, two months ago, etc.</InfoPopup
             >
           </div>
         </fieldset>
