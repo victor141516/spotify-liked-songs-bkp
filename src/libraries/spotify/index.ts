@@ -92,6 +92,7 @@ const rateLimitHandledFetch = async (
     response = await fetch(url, options)
   } catch (e) {
     if (maxRetries > 0) {
+      await sleep(1000)
       return rateLimitHandledFetch(url, options, { expectedStatuses, maxRetries: maxRetries - 1 })
     } else {
       throw new FetchExceptionSpotifyError(
