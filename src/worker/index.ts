@@ -89,11 +89,13 @@ export const _service = (runInterval: number) => {
   let stop = false
   ;(async () => {
     while (true) {
+      let emptyQueue = true
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for await (const iterator of _do(defaultPlaylistSync)) {
+        emptyQueue = false
         if (stop) return
       }
-      await sleep(runInterval * 1000)
+      if (emptyQueue) await sleep(runInterval)
     }
   })()
   return () => {

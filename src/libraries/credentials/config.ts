@@ -3,7 +3,7 @@ export interface UserConfig {
 }
 
 export const DEFAULT_CONFIG: UserConfig = {
-  defaultPlaylistSyncInterval: 240, // minutes
+  defaultPlaylistSyncInterval: 30, // minutes
 }
 
 const trimConfig = (config: Record<string, unknown>): Partial<UserConfig> => {

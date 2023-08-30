@@ -10,8 +10,12 @@ interface Data {
   defaultPlaylistSyncInterval: number
 }
 
+const defaultPlaylistSyncInterval = Number.parseInt(
+  import.meta.env.VITE_DEFAULT_AND_MINIMUM_SYNC_INTERVAL
+)
+
 const formDataState = reactive<Data>({
-  defaultPlaylistSyncInterval: 10
+  defaultPlaylistSyncInterval
 })
 const state = reactive({
   submitDisabled: false,
@@ -40,9 +44,10 @@ const onSubmit = async (e: Event) => {
 
   try {
     data.defaultPlaylistSyncInterval =
-      Number.parseInt(data.defaultPlaylistSyncInterval ?? '10') ?? 10
+      Number.parseInt(data.defaultPlaylistSyncInterval ?? defaultPlaylistSyncInterval.toString()) ??
+      defaultPlaylistSyncInterval
   } catch (e) {
-    data.defaultPlaylistSyncInterval = 10
+    data.defaultPlaylistSyncInterval = defaultPlaylistSyncInterval
   }
 
   state.sendingRequest = true
@@ -81,7 +86,7 @@ const onSubmit = async (e: Event) => {
             <input
               v-model="formDataState.defaultPlaylistSyncInterval"
               type="number"
-              min="10"
+              :min="defaultPlaylistSyncInterval"
               step="1"
               id="defaultPlaylistSyncInterval"
               name="defaultPlaylistSyncInterval"
