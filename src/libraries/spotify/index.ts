@@ -11,6 +11,7 @@ import {
   addBreadcrumb,
   captureException,
 } from '../errors'
+import { sleep } from '../misc'
 
 const PLAYLIST_NAME = 'Liked Songs'
 
@@ -73,27 +74,52 @@ async function handleNotOkResponse(response: Response, url: string): Promise<nev
   throw error
 }
 
+const MAX_RETRIES = 5
+
 const rateLimitHandledFetch = async (
   url: string,
   options: RequestInit = {},
-  { expectedStatuses = [200, 201] }: { expectedStatuses?: number[] } = {},
-) => {
+  {
+    expectedStatuses = [200, 201],
+    maxRetries = MAX_RETRIES,
+  }: { expectedStatuses?: number[]; maxRetries?: number } = {},
+): Promise<Response> => {
+  if (maxRetries < MAX_RETRIES) {
+    console.debug('  - Retrying request...', { url })
+  }
   let response: Response
   try {
     response = await fetch(url, options)
   } catch (e) {
-    throw new FetchExceptionSpotifyError(
-      `URL: ${url}
+    if (maxRetries > 0) {
+      return rateLimitHandledFetch(url, options, { expectedStatuses, maxRetries: maxRetries - 1 })
+    } else {
+      throw new FetchExceptionSpotifyError(
+        `URL: ${url}
       Option: ${JSON.stringify(options)}
       Error: ${e?.toString() || 'Error fetching'}`,
-    )
+      )
+    }
   }
-  if (!expectedStatuses.includes(response.status)) {
-    await handleNotOkResponse(response.clone(), url)
-  }
+
   if (response.status === 429) {
     const retryAfter = Number(response.headers.get('Retry-After'))
-    throw new RateLimitExceededSpotifyError(retryAfter)
+    await sleep(1 + retryAfter * 1000)
+    if (maxRetries > 0) {
+      return rateLimitHandledFetch(url, options, { expectedStatuses, maxRetries: maxRetries - 1 })
+      // throw new RateLimitExceededSpotifyError(retryAfter)
+    } else {
+      await handleNotOkResponse(response.clone(), url)
+    }
+  }
+
+  if (!expectedStatuses.includes(response.status)) {
+    if (maxRetries > 0) {
+      await sleep(1000)
+      return rateLimitHandledFetch(url, options, { expectedStatuses, maxRetries: maxRetries - 1 })
+    } else {
+      await handleNotOkResponse(response.clone(), url)
+    }
   }
   return response
 }
