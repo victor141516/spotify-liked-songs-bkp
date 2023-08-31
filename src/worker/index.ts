@@ -101,7 +101,7 @@ export const _service = (runInterval: number) => {
     while (true) {
       let emptyQueue = true
       const pool = await _do(defaultPlaylistSync)
-      pool
+      await pool
         .onTaskFinished((_, pool) => {
           if (stop) pool.stop()
         })
