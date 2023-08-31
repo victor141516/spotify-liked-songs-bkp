@@ -54,7 +54,7 @@ async function _do(
   job: (accessToken: string, refreshToken: string, clientId: string, clientSecret: string) => Promise<void>,
 ) {
   const newRuns = await getNewRuns()
-  const pool = PromisePool.for(newRuns).withConcurrency(5)
+  const pool = PromisePool.for(newRuns).withConcurrency(2)
   pool
     .process(async (credentials) => {
       console.debug(`!!! New sync run`, {
