@@ -1,4 +1,4 @@
-import PromisePool from '@supercharge/promise-pool'
+import { PromisePool } from '@supercharge/promise-pool'
 import { save as saveCredentials } from '../libraries/credentials'
 import { isInstance, sleep } from '../libraries/misc'
 import {
