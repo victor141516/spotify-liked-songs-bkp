@@ -8,7 +8,7 @@ export const saveRun = async (credentialsId: number, runType: RunType | ErrorRun
   await db.query('INSERT INTO runs (credentials_id, type) VALUES ($1, $2)', [credentialsId, runType])
 }
 
-export async function* getNewRuns() {
+export async function getNewRuns() {
   const query: Promise<QueryResult> = db.query(`
     SELECT
         *
@@ -25,7 +25,5 @@ export async function* getNewRuns() {
         );`)
 
   const { rows } = await query
-  for (const row of rows) {
-    yield row as Credentials & { id: number }
-  }
+  return rows as Array<Credentials & { id: number }>
 }

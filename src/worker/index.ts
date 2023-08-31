@@ -1,4 +1,5 @@
-import { save } from '../libraries/credentials'
+import PromisePool from '@supercharge/promise-pool'
+import { save as saveCredentials } from '../libraries/credentials'
 import { isInstance, sleep } from '../libraries/misc'
 import {
   CouldNotAuthenticateSpotifyError,
@@ -40,7 +41,7 @@ async function defaultPlaylistSync(accessToken: string, refreshToken: string, cl
     throw error
   }
   console.debug('- Updating access token on the database...')
-  await save({ access_token: accessToken, refresh_token: refreshToken }, userId)
+  await saveCredentials({ access_token: accessToken, refresh_token: refreshToken }, userId)
   console.debug('- Getting liked songs...')
   const likedSongs = await getLikedSongs(accessToken)
   console.debug('- Liked songs retrieved!')
@@ -49,39 +50,48 @@ async function defaultPlaylistSync(accessToken: string, refreshToken: string, cl
   console.debug('- Default playlist synced!')
 }
 
-async function* _do(
+async function _do(
   job: (accessToken: string, refreshToken: string, clientId: string, clientSecret: string) => Promise<void>,
 ) {
-  for await (const credentials of getNewRuns()) {
-    console.debug(`!!! New sync run`, {
-      ...credentials,
-      access_token: credentials.access_token.slice(0, 10).concat('...'),
-      refresh_token: credentials.refresh_token.slice(0, 10).concat('...'),
-    })
-    try {
-      await job(
-        credentials.access_token,
-        credentials.refresh_token,
-        spotifyApiData.clientId!,
-        spotifyApiData.clientSecret!,
-      )
-      saveRun(credentials.id, 'defaultPlaylistSync')
-    } catch (error) {
-      if (error instanceof CouldNotAuthenticateSpotifyError || error instanceof PlaylistWithoutItemsSpotifyError) {
-        console.error('!!! Error on the run:', error)
-        saveRun(credentials.id, 'error')
-      } else {
-        if (isInstance(error, RateLimitExceededSpotifyError)) {
-          console.warn('!!! Rate limit exceeded. Waiting seconds', error.retryAfter)
-          await sleep(error.retryAfter * 1000)
+  const newRuns = await getNewRuns()
+  const pool = PromisePool.for(newRuns).withConcurrency(5)
+  pool
+    .process(async (credentials) => {
+      console.debug(`!!! New sync run`, {
+        ...credentials,
+        access_token: credentials.access_token.slice(0, 10).concat('...'),
+        refresh_token: credentials.refresh_token.slice(0, 10).concat('...'),
+      })
+      try {
+        await job(
+          credentials.access_token,
+          credentials.refresh_token,
+          spotifyApiData.clientId!,
+          spotifyApiData.clientSecret!,
+        )
+        saveRun(credentials.id, 'defaultPlaylistSync')
+      } catch (error) {
+        if (error instanceof CouldNotAuthenticateSpotifyError || error instanceof PlaylistWithoutItemsSpotifyError) {
+          console.error('!!! Error on the run:', error)
+          saveRun(credentials.id, 'error')
         } else {
-          console.error('!!! Unknown error while running', error)
+          if (isInstance(error, RateLimitExceededSpotifyError)) {
+            console.warn('!!! Rate limit exceeded. Waiting seconds', error.retryAfter)
+            await sleep(error.retryAfter * 1000)
+            // } else if (isInstance(error, SpotifyApiRefreshTokenRevokedError)) {
+            //   await removeCredentials({ id: credentials.id })
+          } else {
+            console.error('!!! Unknown error while running', error)
+          }
         }
       }
-    }
-    yield
-  }
-  console.debug(`!!! No more sync runs`, new Date())
+      // yield
+    })
+    .then(() => {
+      console.debug(`!!! No more sync runs`, new Date())
+    })
+
+  return pool
 }
 
 export const _service = (runInterval: number) => {
@@ -90,11 +100,14 @@ export const _service = (runInterval: number) => {
   ;(async () => {
     while (true) {
       let emptyQueue = true
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for await (const iterator of _do(defaultPlaylistSync)) {
-        emptyQueue = false
-        if (stop) return
-      }
+      const pool = await _do(defaultPlaylistSync)
+      pool
+        .onTaskFinished((_, pool) => {
+          if (stop) pool.stop()
+        })
+        .onTaskStarted(() => {
+          emptyQueue = false
+        })
       if (emptyQueue) await sleep(runInterval)
     }
   })()
