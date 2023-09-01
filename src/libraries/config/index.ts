@@ -16,6 +16,7 @@ export const MODE = (process.argv[2] || process.env.MODE || 'server') as 'server
 export const RUN_INTERVAL = Number.parseInt(process.env.RUN_INTERVAL || (1000 * 60).toString())
 export const SESSION_SECRET = process.env.SESSION_SECRET || 'a-very-secret-secret'
 export const SENTRY_DSN = process.env.SENTRY_DSN
+export const SYNC_JOB_PARALLELISM = Number.parseInt(process.env.SYNC_JOB_PARALLELISM || '2')
 
 if (!CLIENT_ID) {
   console.warn('CLIENT_ID not set')

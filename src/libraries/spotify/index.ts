@@ -1,3 +1,4 @@
+import { RateLimiter } from 'limiter-es6-compat'
 import memoize from 'memoizee'
 import {
   SpotifyApiAccessTokenExpiredError,
@@ -74,8 +75,8 @@ async function handleNotOkResponse(response: Response, url: string): Promise<nev
   throw error
 }
 
+const limiter = new RateLimiter({ tokensPerInterval: 5, interval: 'second' })
 const MAX_RETRIES = 5
-
 const rateLimitHandledFetch = async (
   url: string,
   options: RequestInit = {},
@@ -85,10 +86,12 @@ const rateLimitHandledFetch = async (
   }: { expectedStatuses?: number[]; maxRetries?: number } = {},
 ): Promise<Response> => {
   if (maxRetries < MAX_RETRIES) {
-    console.debug('  - Retrying request...', { url })
+    console.warn('  - Retrying request...', { url })
   }
+
   let response: Response
   try {
+    await limiter.removeTokens(1)
     response = await fetch(url, options)
   } catch (e) {
     if (maxRetries > 0) {
@@ -105,8 +108,8 @@ const rateLimitHandledFetch = async (
 
   if (response.status === 429) {
     const retryAfter = Number(response.headers.get('Retry-After'))
-    await sleep(1 + retryAfter * 1000)
     if (maxRetries > 0) {
+      await sleep(1 + retryAfter * 1000)
       return rateLimitHandledFetch(url, options, { expectedStatuses, maxRetries: maxRetries - 1 })
       // throw new RateLimitExceededSpotifyError(retryAfter)
     } else {
