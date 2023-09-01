@@ -233,6 +233,7 @@ export async function addTracksToPlaylist(accessToken: string, playlistId: strin
     batches.push(likedSongs.slice(i, i + 100))
   }
 
+  let count = 0
   const batchJobs: boolean[] = []
   for (const batch of batches) {
     const res = await rateLimitHandledFetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
@@ -245,6 +246,8 @@ export async function addTracksToPlaylist(accessToken: string, playlistId: strin
         uris: batch.map((id) => `spotify:track:${id}`),
       }),
     })
+    count += batch.length
+    console.debug('  - Added songs to playlist...', { count })
     batchJobs.push(res.ok)
   }
   return batchJobs.every(Boolean)
