@@ -1,5 +1,5 @@
-import { SYNC_JOB_PARALLELISM } from '@/libraries/config'
 import { PromisePool } from '@supercharge/promise-pool'
+import { SYNC_JOB_PARALLELISM } from '../libraries/config'
 import { Credentials, save as saveCredentials } from '../libraries/credentials'
 import { isInstance, sleep } from '../libraries/misc'
 import {
