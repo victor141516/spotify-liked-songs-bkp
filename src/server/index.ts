@@ -3,7 +3,7 @@ import express, { Request } from 'express'
 import session from 'express-session'
 import { nanoid } from 'nanoid'
 import { get as getUser, remove as removeUser, saveConfig, save as saveUser } from '../libraries/credentials'
-import { getClient } from '../libraries/database'
+import { getPool } from '../libraries/database'
 import { addBreadcrumb } from '../libraries/errors'
 import {
   CouldNotUseCodeToGetAccessTokenSpotifyError,
@@ -30,7 +30,7 @@ export const start = (
     session({
       store: new (pgSessionStore(session))({
         createTableIfMissing: true,
-        pool: getClient(),
+        pool: getPool(),
       }),
       secret: sessionSecret,
       resave: false,

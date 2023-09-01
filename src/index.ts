@@ -22,16 +22,13 @@ const main = async () => {
   SENTRY_DSN && initErrorHandling({ dsn: SENTRY_DSN })
   db.setUri(DATABASE_URI)
   await db.connect()
-  stopHandlers.push(() =>
-    db
-      .getClient()
-      .end()
-      .then(() => db.disconnect()),
-  )
+  stopHandlers.push(() => db.disconnect())
 
   if (MODE === 'worker') {
     worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)
-    stopHandlers.push(worker.startDefaultPlaylistSyncWorker(RUN_INTERVAL))
+    const syncWorker = worker.startDefaultPlaylistSyncWorker(RUN_INTERVAL)
+    stopHandlers.push(syncWorker.stop)
+    stopHandlers.push(async () => await syncWorker.promise)
   } else {
     await server.start(
       CLIENT_ID,
@@ -47,17 +44,23 @@ const main = async () => {
 
 const onExit = async () => {
   console.log('Bye!')
-  stopHandlers.forEach((stopHandler) => stopHandler())
+  return Promise.all(
+    stopHandlers.map(async (stopHandler) => {
+      await stopHandler()
+    }),
+  ).then(() => process.exit())
 }
 
+let exiting = false
 ;['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) =>
-  process.on(signal, () => {
-    onExit()
-    process.exit()
+  process.on(signal, async () => {
+    if (exiting) return
+    exiting = true
+    await onExit()
   }),
 )
 
 main().catch(async (error) => {
   console.error('Uncaught error', error)
-  await db.disconnect()
+  await onExit()
 })
