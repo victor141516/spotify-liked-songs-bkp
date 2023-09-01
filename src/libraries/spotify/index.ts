@@ -85,10 +85,6 @@ const rateLimitHandledFetch = async (
     maxRetries = MAX_RETRIES,
   }: { expectedStatuses?: number[]; maxRetries?: number } = {},
 ): Promise<Response> => {
-  if (maxRetries < MAX_RETRIES) {
-    console.warn('  - Retrying request...', { url })
-  }
-
   let response: Response
   try {
     await limiter.removeTokens(1)
@@ -96,6 +92,7 @@ const rateLimitHandledFetch = async (
   } catch (e) {
     if (maxRetries > 0) {
       await sleep(1000)
+      console.warn('  - Retrying request...', { url })
       return rateLimitHandledFetch(url, options, { expectedStatuses, maxRetries: maxRetries - 1 })
     } else {
       throw new FetchExceptionSpotifyError(
