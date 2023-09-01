@@ -36,6 +36,7 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
+    "limiter-es6-compat": "^2.1.2",
     "memoizee": "^0.4.15",
     "nanoid": "^4.0.2",
     "pg": "^8.10.0"
