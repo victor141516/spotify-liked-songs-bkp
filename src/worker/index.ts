@@ -1,3 +1,4 @@
+import { SpotifyApiRefreshTokenRevokedError } from '@/libraries/errors'
 import { PromisePool } from '@supercharge/promise-pool'
 import { SYNC_JOB_PARALLELISM } from '../libraries/config'
 import { Credentials, save as saveCredentials } from '../libraries/credentials'
@@ -13,7 +14,7 @@ import {
 import { getNewRuns, saveRun } from './database'
 
 export type RunType = 'defaultPlaylistSync'
-export type ErrorRun = 'error'
+export type ErrorRun = 'error' | 'revokedCredentials'
 
 const spotifyApiData = {
   clientId: null as null | string,
@@ -77,8 +78,9 @@ async function processJob(
       if (isInstance(error, RateLimitExceededSpotifyError)) {
         console.warn('!!! Rate limit exceeded. Waiting seconds', error.retryAfter)
         await sleep(error.retryAfter * 1000)
-        // } else if (isInstance(error, SpotifyApiRefreshTokenRevokedError)) {
-        //   await removeCredentials({ id: credentials.id })
+      } else if (isInstance(error, SpotifyApiRefreshTokenRevokedError)) {
+        saveRun(credentials.id, 'revokedCredentials')
+        // await removeCredentials({ id: credentials.id })
       } else {
         console.error('!!! Unknown error while running', error)
       }

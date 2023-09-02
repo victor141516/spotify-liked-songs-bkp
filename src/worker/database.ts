@@ -21,7 +21,7 @@ export async function getNewRuns() {
             JOIN credentials ON runs.credentials_id = credentials.id
           WHERE (runs.type = 'defaultPlaylistSync'
             AND date > NOW() - INTERVAL '1 minute' * COALESCE((credentials.config ->> 'defaultPlaylistSyncInterval')::int4, ${DEFAULT_CONFIG.defaultPlaylistSyncInterval}))
-          OR runs.type = 'error'
+          OR runs.type = 'error' OR runs.type = 'revokedCredentials'
         );`)
 
   const { rows } = await query
