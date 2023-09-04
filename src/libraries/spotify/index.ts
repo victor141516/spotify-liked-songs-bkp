@@ -308,11 +308,13 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
   console.debug('  - Got default playlist tracks!')
 
   console.debug('  - Checking if liked songs playlist has changed...')
-  let hasChanged = false
-  for (let i = 0; i < allItems.length; i++) {
-    if (allItems[i] !== likedSongs?.[i]) {
-      hasChanged = true
-      break
+  let hasChanged = allItems.length !== likedSongs.length
+  if (!hasChanged) {
+    for (let i = 0; i < allItems.length; i++) {
+      if (allItems[i] !== likedSongs?.[i]) {
+        hasChanged = true
+        break
+      }
     }
   }
   console.debug('  - Liked songs playlist has', hasChanged ? 'changed!' : 'not changed!')
