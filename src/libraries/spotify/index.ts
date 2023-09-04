@@ -57,8 +57,15 @@ async function handleNotOkResponse(response: Response, url: string): Promise<nev
   let body = ''
   try {
     body = await response.text()
+    console.error(`!!!!!!! Unexpected erroneous response
+    Error: ${TheError.name}
+    URL: ${url},
+    Status: ${response.status},
+    StatusText: ${response.statusText},
+    Body: ${body}
+    `)
   } catch (e) {
-    console.warn(`!!!!!!! Maybe error. Could not parse not OK response body
+    console.error(`!!!!!!! Could not parse not OK response body
     Error: ${TheError.name}
     URL: ${url},
     Status: ${response.status},
@@ -85,6 +92,9 @@ const rateLimitHandledFetch = async (
     maxRetries = MAX_RETRIES,
   }: { expectedStatuses?: number[]; maxRetries?: number } = {},
 ): Promise<Response> => {
+  if (maxRetries < MAX_RETRIES) {
+    console.warn('  - Retrying request...', { url })
+  }
   let response: Response
   try {
     await limiter.removeTokens(1)
@@ -92,7 +102,6 @@ const rateLimitHandledFetch = async (
   } catch (e) {
     if (maxRetries > 0) {
       await sleep(1000)
-      console.warn('  - Retrying request...', { url })
       return rateLimitHandledFetch(url, options, { expectedStatuses, maxRetries: maxRetries - 1 })
     } else {
       throw new FetchExceptionSpotifyError(
@@ -297,6 +306,17 @@ export async function syncDefaultPlaylist(accessToken: string, likedSongs: strin
     nextUrl = next
   }
   console.debug('  - Got default playlist tracks!')
+
+  console.debug('  - Checking if liked songs playlist has changed...')
+  let hasChanged = false
+  for (let i = 0; i < allItems.length; i++) {
+    if (allItems[i] !== likedSongs?.[i]) {
+      hasChanged = true
+      break
+    }
+  }
+  console.debug('  - Liked songs playlist has', hasChanged ? 'changed!' : 'not changed!')
+  if (!hasChanged) return true
 
   console.debug('  - Resetting default playlist...')
   const batches: string[][] = []
