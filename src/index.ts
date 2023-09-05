@@ -68,7 +68,13 @@ let exiting = false
   }),
 )
 
-main().catch(async (error) => {
-  console.error('Uncaught error', error)
-  await onExit()
-})
+main()
+  .then(() => {
+    console.log('Ended gracefully')
+  })
+  .catch((error) => {
+    console.error('Uncaught error', error)
+  })
+  .finally(async () => {
+    await onExit()
+  })
