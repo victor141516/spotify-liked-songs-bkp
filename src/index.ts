@@ -30,6 +30,8 @@ const main = async () => {
     const syncWorker = worker.startDefaultPlaylistSyncWorker(RUN_INTERVAL)
     stopHandlers.push(syncWorker.stop)
     stopHandlers.push(async () => await syncWorker.promise)
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    await new Promise(() => {})
   } else if (MODE === 'server') {
     const stopServer = server.start(
       CLIENT_ID,
