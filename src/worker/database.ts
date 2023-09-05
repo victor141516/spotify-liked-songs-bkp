@@ -5,7 +5,9 @@ import { DEFAULT_CONFIG } from '../libraries/credentials/config'
 import * as db from '../libraries/database'
 
 export const saveRun = async (credentialsId: number, runType: RunType | ErrorRun) => {
-  await db.query('INSERT INTO runs (credentials_id, type) VALUES ($1, $2)', [credentialsId, runType])
+  return (
+    await db.query('INSERT INTO runs (credentials_id, type) VALUES ($1, $2) RETURNING id', [credentialsId, runType])
+  ).rows[0].id as number
 }
 
 export async function getNewRuns() {

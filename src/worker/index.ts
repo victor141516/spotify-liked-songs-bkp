@@ -69,11 +69,13 @@ async function processJob(
       spotifyApiData.clientId!,
       spotifyApiData.clientSecret!,
     )
-    saveRun(credentials.id, 'defaultPlaylistSync')
+    const runId = await saveRun(credentials.id, 'defaultPlaylistSync')
+    console.debug('!!! Sync run finished successfully', { runId })
   } catch (error) {
     if (error instanceof CouldNotAuthenticateSpotifyError || error instanceof PlaylistWithoutItemsSpotifyError) {
       console.error('!!! Error on the run:', error)
-      saveRun(credentials.id, 'error')
+      const runId = await saveRun(credentials.id, 'error')
+      console.debug('!!! Sync run finished error', { runId })
     } else {
       if (isInstance(error, RateLimitExceededSpotifyError)) {
         console.warn('!!! Rate limit exceeded. Waiting seconds', error.retryAfter)
@@ -119,12 +121,15 @@ export const _service = (runInterval: number) => {
 }
 
 export const startDefaultPlaylistSyncWorker = (runInterval: number) => _service(runInterval)
+
 export const singleSyncJob = async (userId: string) => {
   const credentials = await getCredentials({ id: userId })
-  return await defaultPlaylistSync(
+  await defaultPlaylistSync(
     credentials.access_token,
     credentials.refresh_token,
     spotifyApiData.clientId!,
     spotifyApiData.clientSecret!,
   )
+  const runId = await saveRun(Number.parseInt(userId), 'defaultPlaylistSync')
+  console.debug('!!! Sync run finished successfully', { runId })
 }
