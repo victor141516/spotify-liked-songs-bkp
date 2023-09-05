@@ -8,6 +8,7 @@ import {
   RUN_INTERVAL,
   SENTRY_DSN,
   SESSION_SECRET,
+  SINGLE_SYNC_USER_ID,
   SPOTIFY_API_AUTH_REDIRECT_URI,
   SPOTIFY_API_REVOKE_REDIRECT_URI,
 } from './libraries/config'
@@ -29,7 +30,7 @@ const main = async () => {
     const syncWorker = worker.startDefaultPlaylistSyncWorker(RUN_INTERVAL)
     stopHandlers.push(syncWorker.stop)
     stopHandlers.push(async () => await syncWorker.promise)
-  } else {
+  } else if (MODE === 'server') {
     await server.start(
       CLIENT_ID,
       CLIENT_SECRET,
@@ -39,6 +40,13 @@ const main = async () => {
       APP_REDIRECT_URI,
       SESSION_SECRET,
     )
+  } else {
+    worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)
+    if (SINGLE_SYNC_USER_ID) {
+      await worker.singleSyncJob(SINGLE_SYNC_USER_ID)
+    } else {
+      console.error('When running in single-sync mode, you must provide a user id as the second argument')
+    }
   }
 }
 

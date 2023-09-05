@@ -27,3 +27,10 @@ export async function getNewRuns() {
   const { rows } = await query
   return rows as Array<Credentials & { id: number }>
 }
+
+export async function getCredentials({ id }: { id: string }) {
+  return (await db.query('SELECT * FROM credentials WHERE id = $1', [id])).rows[0] as {
+    access_token: string
+    refresh_token: string
+  }
+}

@@ -11,7 +11,7 @@ import {
   getUser,
   syncDefaultPlaylist,
 } from '../libraries/spotify'
-import { getNewRuns, saveRun } from './database'
+import { getCredentials, getNewRuns, saveRun } from './database'
 
 export type RunType = 'defaultPlaylistSync'
 export type ErrorRun = 'error' | 'revokedCredentials'
@@ -119,3 +119,12 @@ export const _service = (runInterval: number) => {
 }
 
 export const startDefaultPlaylistSyncWorker = (runInterval: number) => _service(runInterval)
+export const singleSyncJob = async (userId: string) => {
+  const credentials = await getCredentials({ id: userId })
+  return await defaultPlaylistSync(
+    credentials.access_token,
+    credentials.refresh_token,
+    spotifyApiData.clientId!,
+    spotifyApiData.clientSecret!,
+  )
+}
