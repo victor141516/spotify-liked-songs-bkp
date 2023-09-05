@@ -13,7 +13,7 @@ export const DATABASE_URI =
   process.env.DATABASE_URI ||
   'postgres://spotify-liked-songs-bkp:spotify-liked-songs-bkp@localhost:25432/spotify-liked-songs-bkp'
 export const MODE = (process.argv[2] || process.env.MODE || 'server') as 'server' | 'worker' | 'single-sync'
-export const SINGLE_SYNC_USER_ID = process.argv[3] || process.env.MODE
+export const SINGLE_SYNC_USER_ID = process.argv[3] || process.env.SINGLE_SYNC_USER_ID
 export const RUN_INTERVAL = Number.parseInt(process.env.RUN_INTERVAL || (1000 * 60).toString())
 export const SESSION_SECRET = process.env.SESSION_SECRET || 'a-very-secret-secret'
 export const SENTRY_DSN = process.env.SENTRY_DSN
