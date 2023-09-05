@@ -31,7 +31,7 @@ const main = async () => {
     stopHandlers.push(syncWorker.stop)
     stopHandlers.push(async () => await syncWorker.promise)
   } else if (MODE === 'server') {
-    await server.start(
+    const stopServer = server.start(
       CLIENT_ID,
       CLIENT_SECRET,
       PORT,
@@ -40,6 +40,9 @@ const main = async () => {
       APP_REDIRECT_URI,
       SESSION_SECRET,
     )
+    stopHandlers.push(stopServer)
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    await new Promise(() => {})
   } else {
     worker.setupSpotifyApi(CLIENT_ID, CLIENT_SECRET)
     if (SINGLE_SYNC_USER_ID) {
@@ -68,7 +71,13 @@ let exiting = false
   }),
 )
 
-main().catch(async (error) => {
-  console.error('Uncaught error', error)
-  await onExit()
-})
+main()
+  .then(() => {
+    console.log('Ended successfully')
+  })
+  .catch((error) => {
+    console.error('Uncaught error', error)
+  })
+  .finally(async () => {
+    await onExit()
+  })

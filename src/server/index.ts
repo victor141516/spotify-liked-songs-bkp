@@ -175,7 +175,15 @@ export const start = (
   const frontendPath = new URL('frontend/dist', import.meta.url).pathname
   app.use(express.static(frontendPath))
 
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log('Listening on port', port)
   })
+
+  return () => {
+    const result = new Promise<void>((resolve) => {
+      app.on('close', () => resolve())
+    })
+    server.close()
+    return result
+  }
 }
